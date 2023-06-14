@@ -1,0 +1,6 @@
+PyQt5
+paho-mqtt
+configparser
+pyinstaller
+pytz
+pybluez
