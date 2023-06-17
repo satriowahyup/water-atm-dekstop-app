@@ -4,3 +4,4 @@ configparser
 pyinstaller
 pytz
 pybluez
+schedule
