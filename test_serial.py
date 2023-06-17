@@ -18,8 +18,8 @@ def send_data_to_arduino(data):
         
         print("Data berhasil dikirim ke Arduino:", json_data)
         
-    except serial.SerialException as e:
-        print("Terjadi kesalahan pada port serial:", str(e))
+    except:
+        print("Terjadi kesalahan pada port serial:")
 
 # Fungsi untuk mengatur jadwal pengiriman data setiap 5 menit
 def schedule_job():
