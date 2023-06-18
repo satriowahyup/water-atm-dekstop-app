@@ -5,10 +5,9 @@ import schedule
 
 # Fungsi untuk mengirim data JSON ke Arduino melalui komunikasi serial
 def send_data_to_arduino(data):
-    try:
+    try:       
         # Inisialisasi port serial
         ser = serial.Serial('/dev/ttyUSB0', 9600)  # Ganti dengan port serial yang sesuai
-        
         # Mengubah data menjadi format JSON
         json_data = json.dumps(data)
         
@@ -25,16 +24,16 @@ def send_data_to_arduino(data):
 def schedule_job():
     # Data JSON yang akan dikirim
     data = {
-        "id": "00001",
-        "ph": 0.4,
-        "turbidity": 3.4
+        "command": "read",
+        "id": "00003",
+        "register": 10
     }
     
     # Mengirim data ke Arduino
     send_data_to_arduino(data)
 
 # Mengatur jadwal pengiriman data setiap 2.5 menit
-schedule.every(2.5).minutes.do(schedule_job)
+schedule.every(0.2).minutes.do(schedule_job)
 
 while True:
     # Menjalankan tugas pada jadwal yang telah ditentukan

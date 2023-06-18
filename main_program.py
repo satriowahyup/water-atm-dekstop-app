@@ -7,7 +7,6 @@ from PyQt5.QtCore import Qt, QTimer
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
         # Inisialisasi komponen GUI
         self.setWindowTitle("Water ATM")
         self.setGeometry(100, 100, 1920, 1080)
@@ -16,17 +15,10 @@ class MainWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
         # Create a label to display image
-        self.label_title = QLabel("Water ATM - Start Health with Best Water Quality")
+        self.label_title = QLabel("Mulai Hidup Sehat dengan Air Berkualitas")
         self.label_title.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_title.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(self.label_title)
-
-        # Create a label to display image
-        background_image = QPixmap("water.jpg")
-        background_label = QLabel(self)
-        background_label.setPixmap(background_image)
-        background_label.setGeometry(0, 0, self.width(), self.height())
-        background_label.setScaledContents(True)
 
         self.button_air_galon = QPushButton("Pesan Air Galon")
         self.button_air_galon.clicked.connect(self.show_page_air_galon)
