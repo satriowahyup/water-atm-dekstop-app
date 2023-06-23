@@ -1,6 +1,5 @@
 {
-    "command": "write",
     "id": "00001",
-    "ph": 0.34,
-    "turbidity": 2.4
+    "ph": "0.12",
+    "turbidity": "1.4"
 }
