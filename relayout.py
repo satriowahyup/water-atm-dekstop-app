@@ -1,6 +1,5 @@
 import sys
 import json
-import serial
 import time
 import threading
 from PyQt5.QtWidgets import (
@@ -8,7 +7,7 @@ from PyQt5.QtWidgets import (
     QWidget, 
     QLabel, 
     QVBoxLayout, 
-    QMessageBox, 
+    QDesktopWidget, 
     QPushButton,
     QDialog,
     QLineEdit,
@@ -758,8 +757,9 @@ class PasswordBackwashFlashing(QDialog):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Mulai Hidup Sehat dengan Air Berkualitas")
-        self.setGeometry(5, 5, 1920, 1080)
+        self.setWindowTitle("Water ATM")
+        screen = QDesktopWidget().screenGeometry()
+        self.setGeometry(screen)
 
         # Warna latar belakang RGB
         self.red = 135
@@ -784,91 +784,99 @@ class MainWindow(QWidget):
 
         # Label untuk status water
         self.label_water = QLabel("Water : -",self)
-        self.label_water.setGeometry(1070, 5, 250, 25)
+        self.label_water.setGeometry(1630, 5, 250, 25)
         self.label_water.setFont(QFont("Arial", 15))
         self.label_water.setAlignment(Qt.AlignRight)
         self.label_water.setStyleSheet("color: white")
 
         # Judul
         self.title_label = QLabel("Mulai Hidup Sehat dengan Air Berkualitas", self)
-        self.title_label.setGeometry(260, 30, 770, 40)
-        self.title_label.setFont(QFont("Arial", 28, QFont.Bold))
+        self.title_label.setGeometry(520, 40, 850, 50)
+        self.title_label.setFont(QFont("Arial", 32, QFont.Bold))
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("color: black")
 
         # Gambar mata air
         self.water_image = QPushButton(self)
-        self.water_image.setGeometry(285, 90, 670, 300)
+        self.water_image.setGeometry(530, 110, 850, 420)
         self.water_image.setStyleSheet("QPushButton { border-image: url(water-icon.png) 0 0 0 0 stretch stretch; }")
 
         # Tombol transaksi air galon
         self.galon_button = QPushButton(self)
-        self.galon_button.setGeometry(40, 350, 400, 300)  # Atur posisi dan ukuran tombol
+        self.galon_button.setGeometry(120, 500, 550, 430)  # Atur posisi dan ukuran tombol
         self.galon_button.setStyleSheet("QPushButton { border-image: url(galon.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
         # label air galon
         self.label_galon = QLabel("Air Galon",self)
-        self.label_galon.setGeometry(168, 630, 150, 40)
+        self.label_galon.setGeometry(235, 905, 310, 40)
         self.label_galon.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_galon.setAlignment(Qt.AlignCenter)
+        self.label_galon.setStyleSheet("background-color: white")
 
         # Tombol transaksi air tumbler
         self.tumbler_button = QPushButton(self)
-        self.tumbler_button.setGeometry(860,365, 330, 280)
+        self.tumbler_button.setGeometry(1320,515, 480, 410)
         self.tumbler_button.setStyleSheet("QPushButton { border-image: url(tumbler.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
         # label air tumbler
         self.label_tumbler = QLabel("Air Tumbler",self)
-        self.label_tumbler.setGeometry(940, 630, 200, 40)
+        self.label_tumbler.setGeometry(1475, 910, 200, 40)
         self.label_tumbler.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_tumbler.setAlignment(Qt.AlignCenter)
+        self.label_tumbler.setStyleSheet("background-color: white")
 
         # ph
         self.ph = QPushButton(self)
-        self.ph.setGeometry(448, 450, 250, 140)
+        self.ph.setGeometry(798, 700, 250, 140)
         self.ph.setStyleSheet("QPushButton { border-image: url(ph.png) 0 0 0 0 stretch stretch; }")
         # label nilai ph
         self.label_ph = QLabel("7.5",self)
-        self.label_ph.setGeometry(488, 590, 120, 30)
+        self.label_ph.setGeometry(838, 840, 120, 30)
         self.label_ph.setFont(QFont("Arial", 18))
         self.label_ph.setAlignment(Qt.AlignCenter)
         self.label_ph.setStyleSheet("background-color: white")
         
-        # Label untuk Turbidity
+        # label kualitas air
+        self.label_quality = QLabel("Kualitas Air",self)
+        self.label_quality.setGeometry(835, 685, 280, 35)
+        self.label_quality.setFont(QFont("Arial", 22, QFont.Bold))
+        self.label_quality.setAlignment(Qt.AlignCenter)
+        self.label_quality.setStyleSheet("background-color: white")
+        # Gambar untuk Turbidity
         self.turbidity = QPushButton(self)
-        self.turbidity.setGeometry(608, 470, 170, 120)
+        self.turbidity.setGeometry(958, 720, 170, 120)
         self.turbidity.setStyleSheet("QPushButton { border-image: url(turbidity.png) 0 0 0 0 stretch stretch; }")
         # nilai turbidity
         self.nilai_turbidity = QLabel("24",self)
-        self.nilai_turbidity.setGeometry(633, 590, 120, 30)
+        self.nilai_turbidity.setGeometry(983, 840, 120, 30)
         self.nilai_turbidity.setFont(QFont("Arial", 18))
         self.nilai_turbidity.setAlignment(Qt.AlignCenter)
         self.nilai_turbidity.setStyleSheet("background-color: white")
         # label turbidity
         self.label_turbidity = QLabel("Turbidity",self)
-        self.label_turbidity.setGeometry(636, 490, 120, 30)
+        self.label_turbidity.setGeometry(985, 740, 120, 30)
         self.label_turbidity.setFont(QFont("Arial", 16, QFont.Bold))
         self.label_turbidity.setAlignment(Qt.AlignCenter)
         
         # pilih pengisian air
         self.info_transaksi = QLabel("Pilih Pengisian Air", self)
-        self.info_transaksi.setGeometry(287, 385, 680, 40)
-        self.info_transaksi.setFont(QFont("Arial", 24, QFont.Bold))
+        self.info_transaksi.setGeometry(665, 545, 620, 40)
+        self.info_transaksi.setFont(QFont("Arial", 26, QFont.Bold))
         self.info_transaksi.setAlignment(Qt.AlignCenter)
-        self.info_transaksi.setStyleSheet("color: black")
+        self.info_transaksi.setStyleSheet("background-color: white")
 
         # settings
         self.settings = QPushButton(self)
-        self.settings.setGeometry(1230, 620, 100, 100)
+        self.settings.setGeometry(1825, 960, 100, 100)
         self.settings.setStyleSheet("QPushButton { border-image: url(settings.png) 0 0 0 0 stretch stretch; }")
 
         # backwash
         self.backwash = QPushButton(self)
-        self.backwash.setGeometry(5, 628, 80, 80)
+        self.backwash.setGeometry(5, 965, 80, 80)
         self.backwash.setStyleSheet("QPushButton { border-image: url(backwash.png) 0 0 0 0 stretch stretch; }")
 
         # when click button
         self.galon_button.clicked.connect(self.showGalonPopup)
         self.tumbler_button.clicked.connect(self.showTumblerPopup)
-        self.backwash.clicked.connect(self.showPasswordBackwashFlashing)
+        self.backwash.clicked.connect(self.showBackwashFlashing)
         self.settings.clicked.connect(self.showPasswordSettings)
 
         # atur posisi layout
@@ -942,4 +950,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    #window.showFullScreen()
     sys.exit(app.exec_())
