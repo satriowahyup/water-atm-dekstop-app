@@ -1,6 +1,6 @@
 import sys
 import json
-import time
+import serial
 import threading
 from PyQt5.QtWidgets import (
     QApplication, 
@@ -14,14 +14,24 @@ from PyQt5.QtWidgets import (
     QGridLayout
 )
 from PyQt5.QtGui import (
-    QPixmap, 
     QFont,
     QColor
 )
 from PyQt5.QtCore import (
     Qt, 
-    QTimer
 )
+# variabel global
+panjang_data_serial = 0
+command = "" # read | write
+id = "00001" 
+ph = "" # 0.1 | number
+turbidity = "" # 0.1 | number
+wadah = "" # galon | tumbler
+volume = "" # 19 | 300
+satuan = "" # liter | mililiter
+status = "" # waiting | running | done
+machine = "inisialisasi"
+water = ""
 
 class GalonPopup(QDialog):
     def __init__(self, galon_data):
@@ -155,6 +165,8 @@ class TumnlerPopup(QDialog):
             dialog = FailedTransactionPopup(info)
             dialog.exec_()
         else:
+            self.digits = ""
+            self.line_edit.setText(self.digits)
             dialog = StstusPengisianTumbler(int(tumbler_data))
             dialog.exec_()
     
@@ -208,7 +220,7 @@ class StstusPengisianTumbler(QDialog):
 class FailedTransactionPopup(QDialog):
     def __init__(self, info_machine):
         super().__init__()
-        self.setWindowTitle("Transaksi Gagal")
+        self.setWindowTitle("Info Status")
         self.setFixedSize(230, 110)
 
         vbox = QVBoxLayout()
@@ -879,52 +891,88 @@ class MainWindow(QWidget):
         self.backwash.clicked.connect(self.showBackwashFlashing)
         self.settings.clicked.connect(self.showPasswordSettings)
 
+        self.label_serial = QLabel("Panjang Data",self)
+        self.label_serial.setGeometry(860, 990, 200, 100)
+        self.label_serial.setFont(QFont("Arial", 12))
+        self.label_serial.setAlignment(Qt.AlignCenter)
+    
         # atur posisi layout
         self.setLayout(self.layout)
 
+        self.receive_data_thread = threading.Thread(target=self.read_serial_data)
+        # Menjalankan thread-thread tersebut
+        self.receive_data_thread.start()
 
-    def showGalonPopup(self):
-        # Simulasikan data jumlah liter air terisi pada galon
-        ## komunikasi serial
-        galon_data = 19
-        """
+    def read_serial_data(self):
         ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
-        data = {
-            "command": "read",
-            "id": "00001",
-            "data": {
-                "data0": "turbidity",
-                "data1": "ph",
-                "data2": "volume"
-            },
-            "mode": {
-                "wadah": "galon",
-                "volume": str(galon_data),
-                "satuan": "liter",
-                "status": ""
+        while True:
+            val = ser.readline()
+            panjang_data_serial = len(val)
+            #print(f"panjang data: {panjang_data_serial}")
+            self.label_serial.setText(f"{panjang_data_serial}")
+            if(len(val) > 1):
+                data = (val.decode('utf-8').strip())
+                json_data = json.loads(data)
+
+                # Mengakses nilai-nilai dalam data JSON
+                command = json_data['command']
+                id = json_data['id']
+                #print(command, " | ", id)
+                data = json_data['data']
+                #print("Data")
+                #print("ph: ", data['data0'], " | ", "turbidity: ", data['data1'])
+                mode = json_data['mode']
+    
+    def showGalonPopup(self):
+        status_machine = machine
+        print(status_machine)
+        if status_machine == "ready":
+            # Simulasikan data jumlah liter air terisi pada galon
+            ## komunikasi serial
+            galon_data = 19
+            """
+            ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
+            data = {
+                "command": "read",
+                "id": "00001",
+                "data": {
+                    "data0": "turbidity",
+                    "data1": "ph",
+                    "data2": "volume"
+                },
+                "mode": {
+                    "wadah": "galon",
+                    "volume": str(galon_data),
+                    "satuan": "liter",
+                    "status": ""
+                }
             }
-        }
-        """
-        if galon_data < 10:
-            info = "Air Kurang Berkualitas"
+            """
+            if galon_data < 10:
+                info = "Air Kurang Berkualitas"
+                dialog = FailedTransactionPopup(info)
+                dialog.exec_()
+            else:
+                """
+                try:
+                    # Mengubah data menjadi format JSON
+                    json_data = json.dumps(data)
+                    
+                    # Mengirim data ke Arduino melalui komunikasi serial
+                    ser.write(json_data.encode())
+                    
+                    print("Data berhasil dikirim ke Arduino:", json_data)
+            
+                except serial.SerialException as e:
+                    print("Terjadi kesalahan pada port serial:", str(e))
+                time.sleep(1)
+                """
+                dialog = GalonPopup(galon_data)
+                dialog.exec_()
+        else :
+            print("machine not ready")
+            info = "Mesin Belum Siap"
             dialog = FailedTransactionPopup(info)
-            dialog.exec_()
-        else:
-            """
-            try:
-                # Mengubah data menjadi format JSON
-                json_data = json.dumps(data)
-                
-                # Mengirim data ke Arduino melalui komunikasi serial
-                ser.write(json_data.encode())
-                
-                print("Data berhasil dikirim ke Arduino:", json_data)
-        
-            except serial.SerialException as e:
-                print("Terjadi kesalahan pada port serial:", str(e))
-            time.sleep(1)
-            """
-            dialog = GalonPopup(galon_data)
             dialog.exec_()
 
     def showTumblerPopup(self):
