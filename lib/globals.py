@@ -1,0 +1,11 @@
+ID = "00001"
+COMMAND = None
+PH = None
+TURBIDITY = None
+WADAH = None
+VOLUME = None
+SATUAN = None
+STATUS = None
+MACHINE = None
+WATER = None
+DATA_VOLUME = None

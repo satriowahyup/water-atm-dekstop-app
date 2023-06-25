@@ -2,6 +2,7 @@ import sys
 import json
 import serial
 import threading
+import time
 from PyQt5.QtWidgets import (
     QApplication, 
     QWidget, 
@@ -19,7 +20,10 @@ from PyQt5.QtGui import (
 )
 from PyQt5.QtCore import (
     Qt, 
+    QTimer
 )
+from lib import globals
+
 # variabel global
 panjang_data_serial = 0
 command = "" # read | write
@@ -30,8 +34,8 @@ wadah = "" # galon | tumbler
 volume = "" # 19 | 300
 satuan = "" # liter | mililiter
 status = "" # waiting | running | done
-machine = "inisialisasi"
-water = ""
+machine = "-" # initialization | ready
+water = "-" # below standard | ready
 
 class GalonPopup(QDialog):
     def __init__(self, galon_data):
@@ -221,17 +225,30 @@ class FailedTransactionPopup(QDialog):
     def __init__(self, info_machine):
         super().__init__()
         self.setWindowTitle("Info Status")
-        self.setFixedSize(230, 110)
+        self.setFixedSize(280, 110)
+
+        # Warna latar belakang RGB
+        self.red = 135
+        self.green = 206
+        self.blue = 235
+        self.background_color = QColor(self.red, self.green, self.blue)
+
+        # Atur warna latar belakang GUI
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), self.background_color)
+        self.setPalette(palette)
 
         vbox = QVBoxLayout()
         label_transaksi = QLabel("Pengisian Air Gagal")
         label_transaksi.setAlignment(Qt.AlignCenter)
-        label_transaksi.setFont(QFont("Arial", 12, QFont.Bold))
+        label_transaksi.setFont(QFont("Arial", 14, QFont.Bold))
         vbox.addWidget(label_transaksi)
 
         label_info_machine = QLabel(f"{info_machine}")
         label_info_machine.setAlignment(Qt.AlignCenter)
         label_info_machine.setFont(QFont("Arial", 11, QFont.Bold))
+        label_info_machine.setStyleSheet("background-color: white")
         vbox.addWidget(label_info_machine)
 
         button_close = QPushButton("Close")
@@ -786,20 +803,22 @@ class MainWindow(QWidget):
         self.setPalette(palette)
 
         self.layout = QVBoxLayout()
-
         # Label untuk status machine
-        self.label_machine = QLabel("Machine : -",self)
-        self.label_machine.setGeometry(10, 5, 250, 25)
+        globals.MACHINE = machine
+        self.label_machine = QLabel(self)
+        self.label_machine.setGeometry(10, 5, 300, 25)
         self.label_machine.setFont(QFont("Arial", 15))
         self.label_machine.setAlignment(Qt.AlignLeft)
         self.label_machine.setStyleSheet("color: white")
+        self.label_machine.setText(f"Machine : {globals.MACHINE}")
 
         # Label untuk status water
-        self.label_water = QLabel("Water : -",self)
-        self.label_water.setGeometry(1630, 5, 250, 25)
+        self.label_water = QLabel(self)
+        self.label_water.setGeometry(1610, 5, 300, 25)
         self.label_water.setFont(QFont("Arial", 15))
         self.label_water.setAlignment(Qt.AlignRight)
         self.label_water.setStyleSheet("color: white")
+        self.label_water.setText(f"Water : {water}")
 
         # Judul
         self.title_label = QLabel("Mulai Hidup Sehat dengan Air Berkualitas", self)
@@ -840,11 +859,12 @@ class MainWindow(QWidget):
         self.ph.setGeometry(798, 700, 250, 140)
         self.ph.setStyleSheet("QPushButton { border-image: url(ph.png) 0 0 0 0 stretch stretch; }")
         # label nilai ph
-        self.label_ph = QLabel("7.5",self)
+        self.label_ph = QLabel(self)
         self.label_ph.setGeometry(838, 840, 120, 30)
         self.label_ph.setFont(QFont("Arial", 18))
         self.label_ph.setAlignment(Qt.AlignCenter)
         self.label_ph.setStyleSheet("background-color: white")
+        self.label_ph.setText(f"{globals.PH}")
         
         # label kualitas air
         self.label_quality = QLabel("Kualitas Air",self)
@@ -857,11 +877,12 @@ class MainWindow(QWidget):
         self.turbidity.setGeometry(958, 720, 170, 120)
         self.turbidity.setStyleSheet("QPushButton { border-image: url(turbidity.png) 0 0 0 0 stretch stretch; }")
         # nilai turbidity
-        self.nilai_turbidity = QLabel("24",self)
+        self.nilai_turbidity = QLabel(self)
         self.nilai_turbidity.setGeometry(983, 840, 120, 30)
         self.nilai_turbidity.setFont(QFont("Arial", 18))
         self.nilai_turbidity.setAlignment(Qt.AlignCenter)
         self.nilai_turbidity.setStyleSheet("background-color: white")
+        self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
         # label turbidity
         self.label_turbidity = QLabel("Turbidity",self)
         self.label_turbidity.setGeometry(985, 740, 120, 30)
@@ -895,13 +916,24 @@ class MainWindow(QWidget):
         self.label_serial.setGeometry(860, 990, 200, 100)
         self.label_serial.setFont(QFont("Arial", 12))
         self.label_serial.setAlignment(Qt.AlignCenter)
-    
-        # atur posisi layout
-        self.setLayout(self.layout)
 
         self.receive_data_thread = threading.Thread(target=self.read_serial_data)
         # Menjalankan thread-thread tersebut
         self.receive_data_thread.start()
+        
+        # atur posisi layout
+        self.setLayout(self.layout)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.refresh_data)
+        self.timer.start(1000)  # Refresh setiap 1000 milidetik (1 detik)
+    
+    def refresh_data(self):
+        self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
+        self.label_ph.setText(f"{globals.PH}")
+
+        globals.MACHINE = "initializing"
+        self.label_machine.setText(f"Machine : {globals.MACHINE}")
 
     def read_serial_data(self):
         ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
@@ -913,24 +945,32 @@ class MainWindow(QWidget):
             if(len(val) > 1):
                 data = (val.decode('utf-8').strip())
                 json_data = json.loads(data)
-
+                print("Data Masuk : ", json_data)
                 # Mengakses nilai-nilai dalam data JSON
-                command = json_data['command']
-                id = json_data['id']
-                #print(command, " | ", id)
                 data = json_data['data']
-                #print("Data")
-                #print("ph: ", data['data0'], " | ", "turbidity: ", data['data1'])
                 mode = json_data['mode']
+                globals.COMMAND = json_data['command']
+                globals.ID = json_data['id']
+                globals.PH = data['data0']
+                globals.TURBIDITY = data['data1']
+                globals.VOLUME = data['data2']
+                globals.WADAH = mode['wadah']
+                globals.DATA_VOLUME = mode['volume']
+                globals.SATUAN = mode['satuan']
+                globals.STATUS = mode['status']
+            else:
+                globals.PH = "-"
+                globals.TURBIDITY= "-"
+                
+            time.sleep(0.1)
     
     def showGalonPopup(self):
-        status_machine = machine
-        print(status_machine)
-        if status_machine == "ready":
-            # Simulasikan data jumlah liter air terisi pada galon
+        status_machine = globals.MACHINE
+        status_water = water
+        print(status_machine, " | ", status_water)
+        if status_machine == "ready" and status_water == "ready":
             ## komunikasi serial
-            galon_data = 19
-            """
+            galon_data = "19"
             ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
             data = {
                 "command": "read",
@@ -947,37 +987,36 @@ class MainWindow(QWidget):
                     "status": ""
                 }
             }
-            """
-            if galon_data < 10:
-                info = "Air Kurang Berkualitas"
-                dialog = FailedTransactionPopup(info)
-                dialog.exec_()
-            else:
-                """
-                try:
-                    # Mengubah data menjadi format JSON
-                    json_data = json.dumps(data)
-                    
-                    # Mengirim data ke Arduino melalui komunikasi serial
-                    ser.write(json_data.encode())
-                    
-                    print("Data berhasil dikirim ke Arduino:", json_data)
+            try:
+                # Mengubah data menjadi format JSON
+                json_data = json.dumps(data)
+                
+                # Mengirim data ke Arduino melalui komunikasi serial
+                ser.write(json_data.encode())
+                print("Data berhasil dikirim ke Arduino:", json_data)
+            except serial.SerialException as e:
+                print("Terjadi kesalahan pada port serial:", str(e))
             
-                except serial.SerialException as e:
-                    print("Terjadi kesalahan pada port serial:", str(e))
-                time.sleep(1)
-                """
-                dialog = GalonPopup(galon_data)
-                dialog.exec_()
+            time.sleep(1)
+            dialog = GalonPopup(galon_data)
+            dialog.exec_()
         else :
-            print("machine not ready")
-            info = "Mesin Belum Siap"
+            info = "Mesin atau Air Problem"
             dialog = FailedTransactionPopup(info)
             dialog.exec_()
 
-    def showTumblerPopup(self):
-        dialog = TumnlerPopup()
-        dialog.exec_()
+    def showTumblerPopup(self):            # Simulasikan data jumlah liter air terisi pada galon
+        status_machine = machine
+        status_water = water
+        print(status_machine, " | ", status_water)
+        if status_machine == "ready":
+            dialog = TumnlerPopup()
+            dialog.exec_()
+        else:
+            info = "Mesin atau Air Problem"
+            dialog = FailedTransactionPopup(info)
+            dialog.exec_()
+
     def showBackwashFlashing(self):
         dialog = BackwashFlashingMenu()
         dialog.exec_()
