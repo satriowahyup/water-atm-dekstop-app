@@ -1,5 +1,13 @@
 {
+    "command": "",
     "id": "00001",
-    "ph": "0.12",
-    "turbidity": "1.4"
+    "ph": "",
+    "turbidity": "",
+    "data0": "turbidity",
+    "data1": "ph",
+    "data2": "volume",
+    "wadah": "",
+    "volume": "",
+    "satuan": "",
+    "status": ""
 }
