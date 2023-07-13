@@ -261,7 +261,7 @@ class FailedTransactionPopup(QDialog):
     def __init__(self, info_machine):
         super().__init__()
         self.setWindowTitle("Info Status")
-        self.setFixedSize(280, 110)
+        self.setFixedSize(300, 110)
 
         # Warna latar belakang RGB
         self.red = 135
@@ -1023,48 +1023,9 @@ class MainWindow(QWidget):
                 globals.TURBIDITY= "-"
     
     def showGalonPopup(self):
-        status_machine = globals.MACHINE
-        status_water = globals.WATER
-        #print(status_machine, " | ", status_water)
-        #if status_machine == "ready" or status_water == "ready":
-        
-        if globals.STATUS == "ready":
-            ## komunikasi serial
-            galon_data = "19"
-            ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
-            data = {
-                "command": "read",
-                "id": "00001",
-                "data": {
-                    "data0": "turbidity",
-                    "data1": "ph",
-                    "data2": "volume"
-                },
-                "mode": {
-                    "wadah": "galon",
-                    "volume": str(galon_data),
-                    "satuan": "liter",
-                    "status": ""
-                },
-                "run": "1"
-            }
-            try:
-                # Mengubah data menjadi format JSON
-                json_data = json.dumps(data)
-                
-                # Mengirim data ke Arduino melalui komunikasi serial
-                ser.write(json_data.encode())
-                print("Data berhasil dikirim ke Arduino:", json_data)
-            except serial.SerialException as e:
-                print("Terjadi kesalahan pada port serial:", str(e))
-            
-            time.sleep(1)
-            dialog = GalonPopup(galon_data)
-            dialog.exec_()
-        else :
-            info = "Mesin atau Air Problem"
-            dialog = FailedTransactionPopup(info)
-            dialog.exec_()
+        info = "Proses Pengisian Air Belum Tersedia"
+        dialog = FailedTransactionPopup(info)
+        dialog.exec_()
 
     def showTumblerPopup(self):            # Simulasikan data jumlah liter air terisi pada galon
         status_machine = machine
