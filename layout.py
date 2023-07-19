@@ -1,29 +1,29 @@
-import sys, serial, time
+import sys, serial, time, os
 from PyQt5.QtWidgets import (
     QApplication, 
     QWidget, 
     QLabel, 
     QVBoxLayout, 
-    QMessageBox, 
     QPushButton,
     QDialog,
     QLineEdit,
     QGridLayout
 )
 from PyQt5.QtGui import (
-    QPixmap, 
     QFont,
     QColor
 )
 from PyQt5.QtCore import (
     Qt, 
     QTimer,
-    QDateTime
+    QDateTime,
+    QUrl
 )
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
 class GalonPopup(QDialog):
-    def __init__(self, galon_data):
-        super().__init__()
+    def __init__(self, galon_data, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Air Galon")
         self.setFixedSize(280, 150)
         self.initUI(galon_data)
@@ -64,10 +64,14 @@ class GalonPopup(QDialog):
         vbox.addWidget(button_close)
 
         self.setLayout(vbox)
+    
+    def closeEvent(self, event):
+        self.parent().toggleAudioPlayback()
+        event.accept()
 
 class TumnlerPopup(QDialog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Proses Pengisian Air Tumbler")
         self.setFixedSize(370, 300)
         self.initUI()
@@ -153,6 +157,10 @@ class TumnlerPopup(QDialog):
         else:
             dialog = StstusPengisianTumbler(tumbler_data)
             dialog.exec_()
+    
+    def closeEvent(self, event):
+        self.parent().toggleAudioPlayback()
+        event.accept()
 
 class StstusPengisianTumbler(QDialog):
     def __init__(self, galon_data):
@@ -350,12 +358,26 @@ class MainWindow(QWidget):
         self.timer.timeout.connect(self.update_datetime)
         self.timer.start(1000)  # Update setiap 1000 milidetik (1 detik)
 
+        # audio
+        self.player = QMediaPlayer()
+        self.player.setVolume(50)
+        self.player.setNotifyInterval(100)  # Update every 100 milliseconds
+        self.player.mediaStatusChanged.connect(self.handleMediaStatusChanged)
+
+        self.file_path = os.path.join(os.getcwd(), 'Selamat-Datang.mp3')
+        self.url = QUrl.fromLocalFile(self.file_path)
+        self.content = QMediaContent(self.url)
+        
+        self.toggleAudioPlayback()
+        
     def update_datetime(self):
         current_datetime = QDateTime.currentDateTime()
         current_time = current_datetime.toString("hh:mm:ss")
         self.label_datetime.setText(current_time)
 
     def showGalonPopup(self):
+        self.toggleAudioPlayback()
+        #self.player.setMuted(not self.player.isMuted())
         # Simulasikan data jumlah liter air terisi pada galon
         galon_data = 10
         if galon_data > 10:
@@ -363,11 +385,27 @@ class MainWindow(QWidget):
             dialog = FailedTransactionPopup(info)
             dialog.exec_()
         else:
-            dialog = GalonPopup(galon_data)
+            dialog = GalonPopup(galon_data, parent=self)
             dialog.exec_()
     def showTumblerPopup(self):
-        dialog = TumnlerPopup()
+        self.toggleAudioPlayback()
+        #self.player.setMuted(not self.player.isMuted())
+        dialog = TumnlerPopup(parent=self)
         dialog.exec_()
+    
+    def toggleAudioPlayback(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        else:
+            self.player.setMedia(self.content)
+            self.player.play()
+
+    def volumeMute(self):
+        self.player.setMuted(not self.player.isMuted())
+
+    def handleMediaStatusChanged(self, status):
+        if status == QMediaPlayer.EndOfMedia:
+            self.player.play()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
