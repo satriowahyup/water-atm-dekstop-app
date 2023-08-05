@@ -211,7 +211,7 @@ class JenisAirPopup(QDialog):
 
     def send_data_to_arduino(self, volume, status):
         #if globals.TUMBLER == "ready":
-        if globals.TUMBLER != "ready":
+        if globals.TUMBLER == "ready":
             ## komunikasi serial
             ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
             data = {
@@ -236,7 +236,7 @@ class JenisAirPopup(QDialog):
                 
                 # Mengirim data ke Arduino melalui komunikasi serial
                 ser.write(json_data.encode())
-                print("Data berhasil dikirim ke Arduino:", json_data)
+                #print("Data berhasil dikirim ke Arduino:", json_data)
             except serial.SerialException as e:
                 print("Terjadi kesalahan pada port serial:", str(e))
 

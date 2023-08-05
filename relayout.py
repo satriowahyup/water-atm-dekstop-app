@@ -62,14 +62,26 @@ class MainWindow(QWidget):
 
         self.layout = QVBoxLayout()
         # Label untuk status machine
-        #globals.MACHINE = machine
         self.label_machine = QLabel(self)
         self.label_machine.setGeometry(10, 5, 300, 25)
         self.label_machine.setFont(QFont("Arial", 15))
         self.label_machine.setAlignment(Qt.AlignLeft)
         self.label_machine.setStyleSheet("color: white")
-        self.label_machine.setText(f"Machine : {globals.MACHINE}")
-        #self.label_machine.setText("Machine : Initializing")
+        self.label_machine.setText(f"Machine : {globals.STATUS}")
+        
+        self.label_galon_status= QLabel(self)
+        self.label_galon_status.setGeometry(10, 35, 300, 25)
+        self.label_galon_status.setFont(QFont("Arial", 15))
+        self.label_galon_status.setAlignment(Qt.AlignLeft)
+        self.label_galon_status.setStyleSheet("color: white")
+        self.label_galon_status.setText(f"Galon : {globals.GALON}")
+
+        self.label_tumbler_status= QLabel(self)
+        self.label_tumbler_status.setGeometry(10, 65, 300, 25)
+        self.label_tumbler_status.setFont(QFont("Arial", 15))
+        self.label_tumbler_status.setAlignment(Qt.AlignLeft)
+        self.label_tumbler_status.setStyleSheet("color: white")
+        self.label_tumbler_status.setText(f"Tumbler : {globals.TUMBLER}")
 
         #label untuk datetime
         self.label_datetime = QLabel(self)
@@ -100,6 +112,11 @@ class MainWindow(QWidget):
         self.label_galon.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_galon.setAlignment(Qt.AlignCenter)
         self.label_galon.setStyleSheet("background-color: white")
+        #tombol bilas galon
+        self.bilas_galon_button = QPushButton("Bilas Galon",self)
+        self.bilas_galon_button.setGeometry(235, 950, 310, 40)
+        self.bilas_galon_button.setFont(QFont("Arial", 24, QFont.Bold))
+        self.bilas_galon_button.setStyleSheet("background-color: skyblue")
 
         # Tombol transaksi air tumbler
         self.tumbler_button = QPushButton(self)
@@ -107,10 +124,15 @@ class MainWindow(QWidget):
         self.tumbler_button.setStyleSheet("QPushButton { border-image: url(tumbler.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
         # label air tumbler
         self.label_tumbler = QLabel("Air Tumbler",self)
-        self.label_tumbler.setGeometry(1475, 910, 200, 40)
+        self.label_tumbler.setGeometry(1425, 910, 300, 40)
         self.label_tumbler.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_tumbler.setAlignment(Qt.AlignCenter)
         self.label_tumbler.setStyleSheet("background-color: white")
+        #tombol bilas galon
+        self.bilas_tumbler_button = QPushButton("Bilas Tumbler",self)
+        self.bilas_tumbler_button.setGeometry(1425, 953, 300, 40)
+        self.bilas_tumbler_button.setFont(QFont("Arial", 24, QFont.Bold))
+        self.bilas_tumbler_button.setStyleSheet("background-color: skyblue")
 
         # ph
         self.ph = QPushButton(self)
@@ -130,6 +152,12 @@ class MainWindow(QWidget):
         self.label_quality.setFont(QFont("Arial", 22, QFont.Bold))
         self.label_quality.setAlignment(Qt.AlignCenter)
         self.label_quality.setStyleSheet("background-color: white")
+        #tombol kualitas air
+        self.kualitas_air_button = QPushButton("Cek Kualitas Air",self)
+        self.kualitas_air_button.setGeometry(835, 880, 280, 40)
+        self.kualitas_air_button.setFont(QFont("Arial", 20, QFont.Bold))
+        self.kualitas_air_button.setStyleSheet("background-color: skyblue")
+
         # Gambar untuk Turbidity
         self.turbidity = QPushButton(self)
         self.turbidity.setGeometry(958, 720, 170, 120)
@@ -169,6 +197,9 @@ class MainWindow(QWidget):
         self.tumbler_button.clicked.connect(self.showTumblerPopup)
         self.backwash.clicked.connect(self.showBackwashFlashing)
         self.settings.clicked.connect(self.showPasswordSettings)
+        self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(run="3"))
+        self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(run="4"))
+        self.bilas_tumbler_button.clicked.connect(lambda: self.send_instruction_to_controller(run="5"))
 
         self.label_serial = QLabel("Panjang Data",self)
         self.label_serial.setGeometry(860, 990, 200, 100)
@@ -204,9 +235,13 @@ class MainWindow(QWidget):
         self.toggleAudioPlayback()
 
     def refresh_data(self):
-        self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
-        self.label_ph.setText(f"{globals.PH}")
+        #self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
+        #self.label_ph.setText(f"{globals.PH}")
+        self.label_ph.setText(f"{globals.DATA_PH}")
+        self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
         self.label_machine.setText(f"Machine : {globals.STATUS}")
+        self.label_galon_status.setText(f"Galon : {globals.GALON}")
+        self.label_tumbler_status.setText(f"Tumbler : {globals.TUMBLER}")
 
     def update_datetime(self):
         current_datetime = QDateTime.currentDateTime()
@@ -221,70 +256,87 @@ class MainWindow(QWidget):
         while True:
             val = ser.readline()
             panjang_data_serial = len(val)
-            #print(f"panjang data: {panjang_data_serial}")
+            
             self.label_serial.setText(f"{panjang_data_serial}")
-            if(len(val) > 1):
-                data = (val.decode('utf-8').strip())
-                json_data = json.loads(data)
-                print("Data Masuk : ", json_data)
-                # Mengakses nilai-nilai dalam data JSON
-                data = json_data['data']
-                mode = json_data['mode']
-                globals.COMMAND = json_data['command']
-                globals.ID = json_data['id']
-                globals.PH = data['data0']
-                globals.TURBIDITY = data['data1']
-                globals.VOLUME = data['data2']
-                globals.WADAH = mode['wadah']
-                globals.DATA_VOLUME = mode['volume']
-                globals.SATUAN = mode['satuan']
-                globals.STATUS = mode['status']
+            if(len(val) > 10):
+                print(f"panjang data: {panjang_data_serial}")
+                #print(val)
+                #data = (val.decode('utf-8').strip())
+                data = (val.decode('latin-1').strip())
+                #print(val)
+                print(data)
+                try:
+                    json_data = json.loads(data)
+                    data = json_data['data']
+                    mode = json_data['mode']
+                    globals.COMMAND = json_data['command']
+                    globals.ID = json_data['id']
+                    globals.PH = data['data0']
+                    globals.TURBIDITY = data['data1']
+                    globals.GALON = mode['galon'] #if mode['galon'] != "" else None
+                    globals.TUMBLER = mode['tumbler'] #if mode['tumbler'] != "" else None
+                    globals.STATUS = mode['status']
+                    #sprint("galon: ", mode['galon'], " | ", "tumbler: ", mode['tumbler'])
+
+                    if data['data0'] != "" or data['data0'] != None:
+                        globals.DATA_PH = data['data0']
+                        #print("ph: ",globals.DATA_PH)
+                    if data['data1'] != "" or data['data1'] != None:
+                        globals.DATA_TURBIDITY = data['data1']
+                        #print("turbidity: ",globals.DATA_TURBIDITY)
+
+                except json.decoder.JSONDecodeError:
+                    print("Data JSON tidak valid:", data)
+                    globals.PH = "-"
+                    globals.TURBIDITY = "-"
             else:
                 globals.PH = "-"
                 globals.TURBIDITY= "-"
     
     def showGalonPopup(self):
+        """
         if self.player.state() == QMediaPlayer.PlayingState:
             self.player.stop()
         dialog = GalonPopup(parent=self)
         dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
         dialog.exec_()
         """
-        if globals.STATUS == "ready":
+        if globals.GALON == "ready":
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            dialog = GalonPopup(galon_data,parent=self)
+            dialog = GalonPopup(parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         else :
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            info = "Mesin Belum Siap"
+            info = "Air Galon Belum Siap"
             dialog = FailedTransactionPopup(info, parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
-        """ 
-    def showTumblerPopup(self):    
+        
+    def showTumblerPopup(self): 
+        """
         if self.player.state() == QMediaPlayer.PlayingState:
             self.player.stop()
         dialog = TumblerPopup(parent=self)
         dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
         dialog.exec_()
         """ 
-        if globals.STATUS == "ready":
+        if globals.TUMBLER == "ready":
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            dialog = TumnlerPopup(parent=self)
+            dialog = TumblerPopup(parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         else:
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            info = "Mesin Belum Siap"
+            info = "Air Tumbler Belum Siap"
             dialog = FailedTransactionPopup(info, parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
-        """
+        
     def showBackwashFlashing(self):
         dialog = BackwashFlashingMenu()
         dialog.exec_()
@@ -307,6 +359,37 @@ class MainWindow(QWidget):
     def handleMediaStatusChanged(self, status):
         if status == QMediaPlayer.EndOfMedia:
             self.player.play()
+
+    def send_instruction_to_controller(self, run):
+        #print("run : ", run)
+        ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
+        data = {
+            "command": "read",
+            "id": "00001",
+            "data": {
+                "data0": "turbidity",
+                "data1": "ph",
+                "data2": "volume"
+            },
+            "mode": {
+                "galon": "",
+                "volume": "",
+                "tumbler": "",
+                "status": ""
+            },
+            "run": str(run)
+        }
+        try:
+            # Mengubah data menjadi format JSON
+            json_data = json.dumps(data)
+            
+            # Mengirim data ke Arduino melalui komunikasi serial
+            ser.write(json_data.encode())
+            #print("Data berhasil dikirim ke Arduino:", json_data)
+        except serial.SerialException as e:
+            print("Terjadi kesalahan pada port serial:", str(e))
+
+        time.sleep(1)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

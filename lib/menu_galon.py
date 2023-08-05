@@ -53,6 +53,7 @@ class GalonPopup(QDialog):
         self.button_NO.setFont(QFont("Arial", 16, QFont.Bold))
 
         self.button_YES.clicked.connect(lambda: self.send_data_to_arduino(volume="19"))
+        self.button_YES.clicked.connect(self.close)
         self.button_NO.clicked.connect(self.close)
 
         #vbox.addWidget(self.button_enter)
@@ -66,7 +67,9 @@ class GalonPopup(QDialog):
         self.digits = ""
 
     def send_data_to_arduino(self, volume):
-        if globals.STATUS == "ready":
+        #print(volume)
+        #if globals.STATUS == "ready" and globals.GALON == "ready":
+        if globals.GALON == "ready":
             ## komunikasi serial
             ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
             data = {
@@ -78,12 +81,12 @@ class GalonPopup(QDialog):
                     "data2": "volume"
                 },
                 "mode": {
-                    "wadah": "tumbler",
+                    "galon": "",
                     "volume": str(volume),
-                    "satuan": "liter",
+                    "tumbler": "",
                     "status": ""
                 },
-                "run": "2"
+                "run": "1"
             }
             try:
                 # Mengubah data menjadi format JSON
@@ -91,17 +94,17 @@ class GalonPopup(QDialog):
                 
                 # Mengirim data ke Arduino melalui komunikasi serial
                 ser.write(json_data.encode())
-                print("Data berhasil dikirim ke Arduino:", json_data)
+                #print("Data berhasil dikirim ke Arduino:", json_data)
             except serial.SerialException as e:
                 print("Terjadi kesalahan pada port serial:", str(e))
 
             self.showStatusTumblerPopup
             time.sleep(1)
         else :
-            info = "Mesin Belum Siap"
+            info = "Air Galon Belum Siap"
             dialog = FailedTransactionPopup(info)
             dialog.exec_()
-    
+        
     def showStatusTumblerPopup(self):
         dialog = StstusPengisianGalon()
         dialog.exec_()
