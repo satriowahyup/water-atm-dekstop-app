@@ -22,8 +22,8 @@ from PyQt5.QtCore import (
     QUrl
 )
 from lib import globals
-from lib.menu_galon import GalonPopup
-from lib.menu_tumbler import TumblerPopup, FailedTransactionPopup
+from lib.menu_galon import GalonPopup, PasswordGalonMenu
+from lib.menu_tumbler import TumblerPopup, FailedTransactionPopup, PasswordTumblerMenu
 from lib.menu_backwash_flashing import BackwashFlashingMenu
 from lib.menu_settings import SettingsMenu, PasswordSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -193,8 +193,10 @@ class MainWindow(QWidget):
         self.backwash.setStyleSheet("QPushButton { border-image: url(backwash.png) 0 0 0 0 stretch stretch; }")
 
         # when click button
-        self.galon_button.clicked.connect(self.showGalonPopup)
-        self.tumbler_button.clicked.connect(self.showTumblerPopup)
+        #self.galon_button.clicked.connect(self.showGalonPopup)
+        self.galon_button.clicked.connect(self.checkPasswordMenuGalon)
+        #self.tumbler_button.clicked.connect(self.showTumblerPopup)
+        self.tumbler_button.clicked.connect(self.checkPasswordTmblerGalon)
         self.backwash.clicked.connect(self.showBackwashFlashing)
         self.settings.clicked.connect(self.showPasswordSettings)
         self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(run="3"))
@@ -247,7 +249,15 @@ class MainWindow(QWidget):
         current_datetime = QDateTime.currentDateTime()
         current_time = current_datetime.toString("hh:mm:ss")
         self.label_datetime.setText(current_time)
-
+        """
+        try:
+            client = ntplib.NTPClient()
+            response = client.request('pool.ntp.org')
+            current_time = QDateTime.fromMSecsSinceEpoch(response.tx_time * 1000).toString("hh:mm:ss")
+            self.label_datetime.setText(current_time)
+        except Exception as e:
+            print("Error updating datetime:", str(e))
+        """
     def request_data_sensor(self):
         print("kirim request sensor ph dan turbidity")
 
@@ -261,15 +271,16 @@ class MainWindow(QWidget):
             if(len(val) > 10):
                 print(f"panjang data: {panjang_data_serial}")
                 #print(val)
-                #data = (val.decode('utf-8').strip())
-                data = (val.decode('latin-1').strip())
+                #data = val.decode('utf-8').strip()
+                data = val.decode('latin-1').strip()
+                #data = val.decode('latin-1', 'ignore').strip() 
                 #print(val)
                 print(data)
                 try:
                     json_data = json.loads(data)
                     data = json_data['data']
                     mode = json_data['mode']
-                    globals.COMMAND = json_data['command']
+                    #globals.COMMAND = json_data['command']
                     globals.ID = json_data['id']
                     globals.PH = data['data0']
                     globals.TURBIDITY = data['data1']
@@ -292,7 +303,15 @@ class MainWindow(QWidget):
             else:
                 globals.PH = "-"
                 globals.TURBIDITY= "-"
-    
+
+    def checkPasswordMenuGalon(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        dialog = PasswordGalonMenu()
+        dialog.exec_()
+        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+        dialog.exec_()
+        
     def showGalonPopup(self):
         """
         if self.player.state() == QMediaPlayer.PlayingState:
@@ -314,7 +333,15 @@ class MainWindow(QWidget):
             dialog = FailedTransactionPopup(info, parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
-        
+    
+    def checkPasswordTmblerGalon(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        dialog = PasswordTumblerMenu()
+        dialog.exec_()
+        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+        dialog.exec_()
+
     def showTumblerPopup(self): 
         """
         if self.player.state() == QMediaPlayer.PlayingState:

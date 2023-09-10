@@ -5,3 +5,4 @@ pyinstaller
 pytz
 pybluez
 schedule
+ntplib

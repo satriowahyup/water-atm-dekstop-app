@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (
     QVBoxLayout, 
     QPushButton,
     QDialog,
+    QLineEdit,
+    QGridLayout
 )
 from PyQt5.QtGui import (
     QFont,
@@ -182,4 +184,119 @@ class FailedTransactionPopup(QDialog):
 
         vbox.addWidget(button_close)
 
+        self.setLayout(vbox)
+
+# password menu settings
+class PasswordGalonMenu(QDialog):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Masukan Password")
+        self.setFixedSize(370, 300)
+        self.initUI()
+        self.serial = None  # Objek serial untuk komunikasi dengan Arduino
+
+    def initUI(self):
+        # Warna latar belakang RGB
+        self.red = 135
+        self.green = 206
+        self.blue = 235
+        self.background_color = QColor(self.red, self.green, self.blue)
+
+        # Atur warna latar belakang GUI
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), self.background_color)
+        self.setPalette(palette)
+
+        vbox = QVBoxLayout()
+        self.label_input = QLabel("Masukkan Password")
+        self.label_input.setAlignment(Qt.AlignCenter)
+        self.label_input.setFont(QFont("Arial", 18, QFont.Bold))
+        vbox.addWidget(self.label_input)
+
+        self.line_edit = QLineEdit()
+        vbox.addWidget(self.line_edit)
+
+        self.grid_layout = QGridLayout()
+
+        for i in range(1, 10):
+            self.button = QPushButton(str(i))
+            self.button.clicked.connect(self.add_digit)
+            self.grid_layout.addWidget(self.button, (i-1)//3, (i-1)%3)
+
+        self.button_comma = QPushButton("@")
+        self.button_comma.clicked.connect(self.add_comma)
+        self.grid_layout.addWidget(self.button_comma, 3, 0)
+
+        self.button_0 = QPushButton("0")
+        self.button_0.clicked.connect(self.add_digit)
+        self.grid_layout.addWidget(self.button_0, 3, 1)
+
+        self.button_clear = QPushButton("#")
+        self.button_clear.clicked.connect(self.clear_digits)
+        self.grid_layout.addWidget(self.button_clear, 3, 2)
+
+        self.button_minus = QPushButton("$")
+        self.button_minus.clicked.connect(self.add_digit)
+        self.grid_layout.addWidget(self.button_minus, 4, 0)
+
+        self.button_plus = QPushButton("%")
+        self.button_plus.clicked.connect(self.add_digit)
+        self.grid_layout.addWidget(self.button_plus, 4, 1)
+
+        self.button_clear = QPushButton("C")
+        self.button_clear.clicked.connect(self.clear_digits)
+        self.grid_layout.addWidget(self.button_clear, 4, 2)
+
+        vbox.addLayout(self.grid_layout)
+
+        self.button_enter = QPushButton("Enter")
+        self.button_enter.clicked.connect(self.checkPassword)
+        vbox.addWidget(self.button_enter)
+
+        self.setLayout(vbox)
+        self.digits = ""
+    
+    def add_digit(self):
+        sender = self.sender()
+        self.digits += sender.text()
+        self.line_edit.setText(self.digits)
+
+    def add_comma(self):
+        if "." not in self.digits:
+            self.digits += "."
+            self.line_edit.setText(self.digits)
+
+    def clear_digits(self):
+        self.digits = ""
+        self.line_edit.setText(self.digits)
+    
+    def checkPassword(self):
+        # Simulasikan data jumlah liter air terisi pada galon
+        data = self.line_edit.text()
+        if data == "2339":
+            self.digits = ""
+            self.line_edit.setText(self.digits)
+            dialog = GalonPopup()
+            dialog.exec_()
+        else:
+            dialog = incorrectPassword()
+            dialog.exec_()
+
+class incorrectPassword(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Login Gagal")
+        self.setFixedSize(230, 90)
+
+        vbox = QVBoxLayout()
+        label = QLabel("Password Anda Salah")
+        label.setAlignment(Qt.AlignCenter)
+        label.setFont(QFont("Arial", 12, QFont.Bold))
+        vbox.addWidget(label)
+
+        self.button_close = QPushButton("Close")
+        self.button_close.clicked.connect(self.close)
+
+        vbox.addWidget(self.button_close)
         self.setLayout(vbox)
