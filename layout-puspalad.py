@@ -22,10 +22,11 @@ from PyQt5.QtCore import (
     QUrl
 )
 from lib import globals
-from lib.menu_tumbler_puspalad import TumblerPopup, FailedTransactionPopup
+#from lib.menu_tumbler_puspalad import TumblerPopup, FailedTransactionPopup
 from lib.menu_backwash_flashing import BackwashFlashingMenu
 from lib.menu_settings import SettingsMenu, PasswordSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from lib.menu_tumbler import TumblerPopup, FailedTransactionPopup, PasswordTumblerMenu
 
 # variabel global
 panjang_data_serial = 0
@@ -123,7 +124,8 @@ class MainWindow(QWidget):
         self.backwash.setStyleSheet("QPushButton { border-image: url(backwash.png) 0 0 0 0 stretch stretch; }")
 
         # when click button
-        self.tumbler_button.clicked.connect(self.showTumblerPopup)
+        #self.tumbler_button.clicked.connect(self.showTumblerPopup)
+        self.tumbler_button.clicked.connect(self.checkPasswordTmblerGalon)
         self.backwash.clicked.connect(self.showBackwashFlashing)
         self.settings.clicked.connect(self.showPasswordSettings)
 
@@ -205,6 +207,14 @@ class MainWindow(QWidget):
             else:
                 globals.PH = "-"
                 globals.TURBIDITY= "-"
+
+    def checkPasswordTmblerGalon(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        dialog = PasswordTumblerMenu()
+        dialog.exec_()
+        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+        dialog.exec_()
 
     def showTumblerPopup(self):   
         if self.player.state() == QMediaPlayer.PlayingState:
