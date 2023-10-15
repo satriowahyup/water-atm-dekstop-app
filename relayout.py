@@ -170,9 +170,9 @@ class MainWindow(QWidget):
         self.nilai_turbidity.setStyleSheet("background-color: white")
         self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
         # label turbidity
-        self.label_turbidity = QLabel("Turbidity",self)
+        self.label_turbidity = QLabel("TDS",self)
         self.label_turbidity.setGeometry(985, 740, 120, 30)
-        self.label_turbidity.setFont(QFont("Arial", 16, QFont.Bold))
+        self.label_turbidity.setFont(QFont("Arial", 18, QFont.Bold))
         self.label_turbidity.setAlignment(Qt.AlignCenter)
         
         # pilih pengisian air
@@ -219,6 +219,10 @@ class MainWindow(QWidget):
         self.timer.timeout.connect(self.refresh_data) # update data dan tampilam aplikasi
         self.timer.start(100)  # Refresh setiap 100 milidetik (0.1 detik)
 
+        self.timer_sensor = QTimer(self)
+        self.timer_sensor.timeout.connect(self.refresh_ph_turbidity) # update data dan tampilam aplikasi
+        self.timer_sensor.start(250)  # Refresh setiap 250 milidetik
+
         # timer untuk refresh datetime
         self.timer_datetime = QTimer(self)
         self.timer_datetime.timeout.connect(self.update_datetime)
@@ -233,17 +237,20 @@ class MainWindow(QWidget):
         self.file_path = os.path.join(os.getcwd(), 'Selamat-Datang.mp3')
         self.url = QUrl.fromLocalFile(self.file_path)
         self.content = QMediaContent(self.url)
-        
+     
         self.toggleAudioPlayback()
 
     def refresh_data(self):
-        #self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
-        #self.label_ph.setText(f"{globals.PH}")
-        self.label_ph.setText(f"{globals.DATA_PH}")
-        self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
+        #self.label_ph.setText(f"{globals.DATA_PH}")
+        #self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
         self.label_machine.setText(f"Machine : {globals.STATUS}")
         self.label_galon_status.setText(f"Galon : {globals.GALON}")
         self.label_tumbler_status.setText(f"Tumbler : {globals.TUMBLER}")
+
+    def refresh_ph_turbidity(self):
+        if globals.STATUS == "ready" and globals.GALON == "ready" and globals.TUMBLER == "ready":
+            self.label_ph.setText(f"{globals.DATA_PH}")
+            self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
 
     def update_datetime(self):
         current_datetime = QDateTime.currentDateTime()
