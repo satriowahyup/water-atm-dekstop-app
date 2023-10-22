@@ -22,11 +22,11 @@ from PyQt5.QtCore import (
     QUrl
 )
 from lib import globals
-#from lib.menu_tumbler_puspalad import TumblerPopup, FailedTransactionPopup
+from lib.menu_report import ReportMenu
 from lib.menu_backwash_flashing import BackwashFlashingMenu
 from lib.menu_settings import SettingsMenu, PasswordSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from lib.menu_tumbler import TumblerPopup, FailedTransactionPopup, PasswordTumblerMenu
+from lib.menu_tumbler_puspalad import TumblerPopup, FailedTransactionPopup, PasswordTumblerMenu
 
 # variabel global
 panjang_data_serial = 0
@@ -90,11 +90,6 @@ class MainWindow(QWidget):
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("color: black")
 
-        # Gambar mata air
-        #self.water_image = QPushButton(self)
-        #self.water_image.setGeometry(530, 110, 850, 420)
-        #self.water_image.setStyleSheet("QPushButton { border-image: url(water-icon.png) 0 0 0 0 stretch stretch; }")
-
         # pilih pengisian air
         self.info_transaksi = QLabel("Pengisian Air", self)
         self.info_transaksi.setGeometry(755, 180, 420, 50)
@@ -120,8 +115,8 @@ class MainWindow(QWidget):
 
         # backwash
         self.backwash = QPushButton(self)
-        self.backwash.setGeometry(5, 965, 80, 80)
-        self.backwash.setStyleSheet("QPushButton { border-image: url(backwash.png) 0 0 0 0 stretch stretch; }")
+        self.backwash.setGeometry(5, 955, 95, 95)
+        self.backwash.setStyleSheet("QPushButton { border-image: url(report.png) 0 0 0 0 stretch stretch; }")
 
         # when click button
         #self.tumbler_button.clicked.connect(self.showTumblerPopup)
@@ -156,7 +151,7 @@ class MainWindow(QWidget):
         self.player.setNotifyInterval(100)  # Update every 100 milliseconds
         self.player.mediaStatusChanged.connect(self.handleMediaStatusChanged)
 
-        self.file_path = os.path.join(os.getcwd(), 'Selamat-Datang.mp3')
+        self.file_path = os.path.join(os.getcwd(), 'voice/Selamat-Datang.mp3')
         self.url = QUrl.fromLocalFile(self.file_path)
         self.content = QMediaContent(self.url)
         
@@ -239,6 +234,7 @@ class MainWindow(QWidget):
          """
     def showBackwashFlashing(self):
         dialog = BackwashFlashingMenu()
+        #dialog= ReportMenu()
         dialog.exec_()
     
     def showSettings(self):
@@ -264,5 +260,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    #window.showFullScreen()
     sys.exit(app.exec_())

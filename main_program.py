@@ -10,9 +10,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout, 
     QDesktopWidget, 
     QPushButton,
-    QDialog,
-    QLineEdit,
-    QGridLayout
 )
 from PyQt5.QtGui import (
     QFont,
@@ -25,6 +22,10 @@ from PyQt5.QtCore import (
     QUrl
 )
 from lib import globals
+from lib.menu_galon import GalonPopup, PasswordGalonMenu
+from lib.menu_tumbler import TumblerPopup, FailedTransactionPopup, PasswordTumblerMenu
+from lib.menu_backwash_flashing import BackwashFlashingMenu
+from lib.menu_settings import SettingsMenu, PasswordSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
 # variabel global
@@ -37,788 +38,7 @@ wadah = "" # galon | tumbler
 volume = "" # 19 | 300
 satuan = "" # liter | mililiter
 status = "" # waiting | running | done
-machine = "initialization" # initialization | ready
-water = "-" # below standard | ready
 
-class GalonPopup(QDialog):
-    def __init__(self, galon_data, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Air Galon")
-        self.setFixedSize(280, 150)
-        self.initUI(galon_data)
-
-    def initUI(self, galon_data):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-
-        label_info = QLabel("Proses Pengisian Air")
-        label_info.setAlignment(Qt.AlignCenter)
-        label_info.setFont(QFont("Arial", 14, QFont.Bold))
-        vbox.addWidget(label_info)
-
-        #label_title = QLabel("Jumlah Air Terisi")
-        #label_title.setAlignment(Qt.AlignCenter)
-        #label_title.setFont(QFont("Arial", 14))
-        # vbox.addWidget(label_title)
-
-        label_galon_data = QLabel(f"{galon_data} L")
-        label_galon_data.setAlignment(Qt.AlignCenter)
-        label_galon_data.setFont(QFont("Arial", 22, QFont.Bold))
-        vbox.addWidget(label_galon_data)
-
-        button_close = QPushButton("Close")
-        button_close.clicked.connect(self.close)
-
-        vbox.addWidget(button_close)
-
-        self.setLayout(vbox)
-
-#Menu Tumbler
-class TumnlerPopup(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Proses Pengisian Air Tumbler")
-        self.setFixedSize(370, 300)
-        self.initUI()
-        self.serial = None  # Objek serial untuk komunikasi dengan Arduino
-
-    def initUI(self):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        self.label_input = QLabel("Masukkan Jumlah mL Air")
-        self.label_input.setAlignment(Qt.AlignCenter)
-        self.label_input.setFont(QFont("Arial", 18, QFont.Bold))
-        vbox.addWidget(self.label_input)
-
-        self.line_edit = QLineEdit()
-        vbox.addWidget(self.line_edit)
-
-        self.grid_layout = QGridLayout()
-
-        for i in range(1, 10):
-            button = QPushButton(str(i))
-            button.clicked.connect(self.add_digit)
-            self.grid_layout.addWidget(button, (i-1)//3, (i-1)%3)
-
-        button_comma = QPushButton(".")
-        button_comma.clicked.connect(self.add_comma)
-        self.grid_layout.addWidget(button_comma, 3, 0)
-
-        button_0 = QPushButton("0")
-        button_0.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_0, 3, 1)
-
-        button_clear = QPushButton("C")
-        button_clear.clicked.connect(self.clear_digits)
-        self.grid_layout.addWidget(button_clear, 3, 2)
-
-        vbox.addLayout(self.grid_layout)
-
-        self.button_enter = QPushButton("Enter")
-        self.button_enter.clicked.connect(self.send_data_to_arduino)
-        self.button_enter.clicked.connect(self.readData)
-        self.button_enter.clicked.connect(self.showStatusTumblerPopup)
-        vbox.addWidget(self.button_enter)
-
-        self.setLayout(vbox)
-        self.digits = ""
-    
-    def add_digit(self):
-        sender = self.sender()
-        self.digits += sender.text()
-        self.line_edit.setText(self.digits)
-
-    def add_comma(self):
-        if "." not in self.digits:
-            self.digits += "."
-            self.line_edit.setText(self.digits)
-
-    def clear_digits(self):
-        self.digits = ""
-        self.line_edit.setText(self.digits)
-
-    def send_data_to_arduino(self):
-        tumbler_data = self.line_edit.text()
-        print(int(tumbler_data))
-        if globals.STATUS == "ready":
-            ## komunikasi serial
-            ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
-            data = {
-                "command": "read",
-                "id": "00001",
-                "data": {
-                    "data0": "turbidity",
-                    "data1": "ph",
-                    "data2": "volume"
-                },
-                "mode": {
-                    "wadah": "tumbler",
-                    "volume": str(tumbler_data),
-                    "satuan": "mililiter",
-                    "status": ""
-                },
-                "run": "2"
-            }
-            try:
-                # Mengubah data menjadi format JSON
-                json_data = json.dumps(data)
-                
-                # Mengirim data ke Arduino melalui komunikasi serial
-                ser.write(json_data.encode())
-                print("Data berhasil dikirim ke Arduino:", json_data)
-            except serial.SerialException as e:
-                print("Terjadi kesalahan pada port serial:", str(e))
-            
-            time.sleep(1)
-            #dialog = GalonPopup(galon_data)
-            #dialog.exec_()
-        else :
-            info = "Mesin Belum Siap"
-            dialog = FailedTransactionPopup(info)
-            dialog.exec_()
-    
-    def showStatusTumblerPopup(self):
-        # Simulasikan data jumlah liter air terisi pada galon
-        tumbler_data = self.line_edit.text()
-        if int(tumbler_data) > 1000:
-            info = "Melebihi Batas 1000mL"
-            dialog = FailedTransactionPopup(info)
-            dialog.exec_()
-        else:
-            self.digits = ""
-            self.line_edit.setText(self.digits)
-            dialog = StstusPengisianTumbler(int(tumbler_data))
-            dialog.exec_()
-    
-    def readData(self):
-        data = self.line_edit.text()
-        print("Data : ", data)
-
-class StstusPengisianTumbler(QDialog):
-    def __init__(self, galon_data):
-        super().__init__()
-        self.setWindowTitle("Air Tumbler")
-        self.setFixedSize(280, 150)
-        self.initUI(galon_data)
-
-    def initUI(self, galon_data):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        label_info = QLabel("Proses Pengisian Air")
-        label_info.setAlignment(Qt.AlignCenter)
-        label_info.setFont(QFont("Arial", 14, QFont.Bold))
-        vbox.addWidget(label_info)
-
-        label_title = QLabel("Jumlah Air Terisi")
-        label_title.setAlignment(Qt.AlignCenter)
-        label_title.setFont(QFont("Arial", 14))
-        vbox.addWidget(label_title)
-
-        label_tumbler_data = QLabel(f"{galon_data} mL")
-        label_tumbler_data.setAlignment(Qt.AlignCenter)
-        label_tumbler_data.setFont(QFont("Arial", 22, QFont.Bold))
-        vbox.addWidget(label_tumbler_data)
-
-        button_close = QPushButton("Close")
-        button_close.clicked.connect(self.close)
-
-        vbox.addWidget(button_close)
-
-        self.setLayout(vbox)
-
-class FailedTransactionPopup(QDialog):
-    def __init__(self, info_machine, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Info Status")
-        self.setFixedSize(280, 110)
-
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        label_transaksi = QLabel("Pengisian Air Gagal")
-        label_transaksi.setAlignment(Qt.AlignCenter)
-        label_transaksi.setFont(QFont("Arial", 14, QFont.Bold))
-        vbox.addWidget(label_transaksi)
-
-        label_info_machine = QLabel(f"{info_machine}")
-        label_info_machine.setAlignment(Qt.AlignCenter)
-        label_info_machine.setFont(QFont("Arial", 11, QFont.Bold))
-        label_info_machine.setStyleSheet("background-color: white")
-        vbox.addWidget(label_info_machine)
-
-        button_close = QPushButton("Close")
-        button_close.clicked.connect(self.close)
-
-        vbox.addWidget(button_close)
-
-        self.setLayout(vbox)
-
-class BackwashFlashingMenu(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Backwash Flashing Menu")
-        self.setFixedSize(280, 150)
-        self.initUI()
-
-    def initUI(self):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        label_info = QLabel("Proses Sirkulasi Air")
-        label_info.setAlignment(Qt.AlignCenter)
-        label_info.setFont(QFont("Arial", 14, QFont.Bold))
-        vbox.addWidget(label_info)
-
-        button_backwash = QPushButton("Backwash")
-        button_flashing = QPushButton("Flashing")
-        #button_backwash.clicked.connect(self.close)
-
-        vbox.addWidget(button_backwash)
-        vbox.addWidget(button_flashing)
-
-        # when click button
-        button_backwash.clicked.connect(self.sendDataBackwash)
-        button_flashing.clicked.connect(self.senDataFlashing)
-
-        self.setLayout(vbox)
-    
-    def sendDataBackwash(self):
-        data = 'Backwash'
-        print(data)
-        dialog = popupInfo(data)
-        dialog.exec_()
-        
-    def senDataFlashing(self):
-        data= 'Flashing'
-        print(data)
-        dialog = popupInfo(data)
-        dialog.exec_()
-
-class popupInfo(QDialog):
-    def __init__(self, info):
-        super().__init__()
-        self.setWindowTitle("Informasi")
-        self.setFixedSize(280, 150)
-        self.initUI(info)
-
-    def initUI(self, info):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        label_tumbler_data = QLabel(f"Proses {info}")
-        label_tumbler_data.setAlignment(Qt.AlignCenter)
-        label_tumbler_data.setFont(QFont("Arial", 22, QFont.Bold))
-        vbox.addWidget(label_tumbler_data)
-
-        button_close = QPushButton("Close")
-        button_close.clicked.connect(self.close)
-
-        vbox.addWidget(button_close)
-
-        self.setLayout(vbox)
-
-## menu settings
-class SettingsMenu(QDialog):
-    def __init__(self,):
-        super().__init__()
-        self.setWindowTitle("Menu Settings")
-        self.setFixedSize(350, 340)
-        self.initUI()
-
-    def initUI(self):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        label_info = QLabel("Masukan Settings Parameter")
-        label_info.setAlignment(Qt.AlignCenter)
-        label_info.setFont(QFont("Arial", 14, QFont.Bold))
-        vbox.addWidget(label_info)
-
-        label_id = QLabel("ID Mesin: 000001")
-        label_id.setAlignment(Qt.AlignCenter)
-        label_id.setFont(QFont("Arial", 12, QFont.Bold))
-        vbox.addWidget(label_id)
-
-        label_ph = QLabel("Setting pH Threshold")
-        label_ph.setAlignment(Qt.AlignCenter)
-        label_ph.setFont(QFont("Arial", 12, QFont.Bold))
-        vbox.addWidget(label_ph)
-        self.line_edit_ph = QLineEdit()
-        vbox.addWidget(self.line_edit_ph)
-
-        self.grid_layout = QGridLayout()
-
-        for i in range(1, 10):
-            button = QPushButton(str(i))
-            button.clicked.connect(self.add_digit)
-            self.grid_layout.addWidget(button, (i-1)//3, (i-1)%3)
-
-        button_comma = QPushButton(".")
-        button_comma.clicked.connect(self.add_comma)
-        self.grid_layout.addWidget(button_comma, 3, 0)
-
-        button_0 = QPushButton("0")
-        button_0.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_0, 3, 1)
-
-        button_backspace = QPushButton("<")
-        button_backspace.clicked.connect(self.backspace_digits)
-        self.grid_layout.addWidget(button_backspace, 3, 2)
-
-        button_minus = QPushButton("-")
-        button_minus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_minus, 4, 0)
-
-        button_plus = QPushButton("+")
-        button_plus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_plus, 4, 1)
-
-        button_clear = QPushButton("C")
-        button_clear.clicked.connect(self.clear_digits)
-        self.grid_layout.addWidget(button_clear, 4, 2)
-
-        vbox.addLayout(self.grid_layout)
-
-        self.button_enter = QPushButton("Enter")
-        self.button_enter.clicked.connect(self.nextSettingTurbidity)
-        vbox.addWidget(self.button_enter)
-
-        self.setLayout(vbox)
-        self.digits = ""
-    
-    def add_digit(self):
-        sender = self.sender()
-        self.digits += sender.text()
-        self.line_edit_ph.setText(self.digits)
-
-    def add_comma(self):
-        if "." not in self.digits:
-            self.digits += "."
-            self.line_edit_ph.setText(self.digits)
-
-    def backspace_digits(self):
-        self.digits = ""
-        self.line_edit_ph.backspace()
-    
-    def clear_digits(self):
-        self.digits = ""
-        self.line_edit_ph.setText(self.digits)
-
-    def nextSettingTurbidity(self):
-        # Membaca data dari file JSON
-        with open('setting.json') as file:
-            data = json.load(file)
-        # nilai seeting ph
-        data_ph = self.line_edit_ph.text()
-        # Memperbarui nilai
-        data['ph'] = data_ph
-        # Menulis kembali data ke file JSON
-        with open('setting.json', 'w') as file:
-            json.dump(data, file, indent=4)
-        self.digits = ""
-        self.line_edit_ph.setText(self.digits)
-        dialog = TurbiditySettingsMenu(data_ph)
-        dialog.exec_()
-
-class TurbiditySettingsMenu(QDialog):
-    def __init__(self, data_ph):
-        super().__init__()
-        self.setWindowTitle("Menu Settings")
-        self.setFixedSize(350, 340)
-        self.initUI(data_ph)
-
-    def initUI(self, data_ph):
-        data = data_ph
-        print("data ph : ", data_ph)
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        label_info = QLabel("Masukan Settings Parameter")
-        label_info.setAlignment(Qt.AlignCenter)
-        label_info.setFont(QFont("Arial", 14, QFont.Bold))
-        vbox.addWidget(label_info)
-
-        label_id = QLabel("ID Mesin: 000001")
-        label_id.setAlignment(Qt.AlignCenter)
-        label_id.setFont(QFont("Arial", 12, QFont.Bold))
-        vbox.addWidget(label_id)
-
-        label_turbidity = QLabel("Setting Turbidity Threshold")
-        label_turbidity.setAlignment(Qt.AlignCenter)
-        label_turbidity.setFont(QFont("Arial", 12, QFont.Bold))
-        vbox.addWidget(label_turbidity)
-        self.line_edit_turbidity = QLineEdit()
-        vbox.addWidget(self.line_edit_turbidity)
-
-        self.grid_layout = QGridLayout()
-
-        for i in range(1, 10):
-            button = QPushButton(str(i))
-            button.clicked.connect(self.add_digit)
-            self.grid_layout.addWidget(button, (i-1)//3, (i-1)%3)
-
-        button_comma = QPushButton(".")
-        button_comma.clicked.connect(self.add_comma)
-        self.grid_layout.addWidget(button_comma, 3, 0)
-
-        button_0 = QPushButton("0")
-        button_0.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_0, 3, 1)
-
-        button_backspace = QPushButton("<")
-        button_backspace.clicked.connect(self.backspace_digits)
-        self.grid_layout.addWidget(button_backspace, 3, 2)
-
-        button_minus = QPushButton("-")
-        button_minus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_minus, 4, 0)
-
-        button_plus = QPushButton("+")
-        button_plus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_plus, 4, 1)
-
-        button_clear = QPushButton("C")
-        button_clear.clicked.connect(self.clear_digits)
-        self.grid_layout.addWidget(button_clear, 4, 2)
-
-        vbox.addLayout(self.grid_layout)
-
-        self.button_enter = QPushButton("Enter")
-        self.button_enter.clicked.connect(self.sendSettingstoArduino)
-        print(data)
-        vbox.addWidget(self.button_enter)
-
-        self.setLayout(vbox)
-        self.digits = ""
-    
-    def add_digit(self):
-        sender = self.sender()
-        self.digits += sender.text()
-        self.line_edit_turbidity.setText(self.digits)
-
-    def add_comma(self):
-        if "." not in self.digits:
-            self.digits += "."
-            self.line_edit_turbidity.setText(self.digits)
-
-    def backspace_digits(self):
-        self.line_edit_turbidity.backspace()
-    
-    def clear_digits(self):
-        self.digits = ""
-        self.line_edit_turbidity.setText(self.digits)
-    
-    def sendSettingstoArduino(self):
-        data_turbidity = self.line_edit_turbidity.text()
-        print(data_turbidity)
-        # Membaca data dari file JSON
-        with open('setting.json') as file:
-            data = json.load(file)
-        # Memperbarui nilai
-        data['turbidity'] = data_turbidity
-        with open('setting.json', 'w') as file:
-            json.dump(data, file, indent=4)
-        self.digits = ""
-        self.line_edit_turbidity.setText(self.digits)
-
-    def closeAllPopups(self):
-        self.parent().close()
-        self.parent().parent().close()
-
-# password menu settings
-class PasswordSettings(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Masukan Password")
-        self.setFixedSize(370, 300)
-        self.initUI()
-        self.serial = None  # Objek serial untuk komunikasi dengan Arduino
-
-    def initUI(self):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        self.label_input = QLabel("Masukkan Password")
-        self.label_input.setAlignment(Qt.AlignCenter)
-        self.label_input.setFont(QFont("Arial", 18, QFont.Bold))
-        vbox.addWidget(self.label_input)
-
-        self.line_edit = QLineEdit()
-        vbox.addWidget(self.line_edit)
-
-        self.grid_layout = QGridLayout()
-
-        for i in range(1, 10):
-            button = QPushButton(str(i))
-            button.clicked.connect(self.add_digit)
-            self.grid_layout.addWidget(button, (i-1)//3, (i-1)%3)
-
-        button_comma = QPushButton("@")
-        button_comma.clicked.connect(self.add_comma)
-        self.grid_layout.addWidget(button_comma, 3, 0)
-
-        button_0 = QPushButton("0")
-        button_0.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_0, 3, 1)
-
-        button_clear = QPushButton("#")
-        button_clear.clicked.connect(self.clear_digits)
-        self.grid_layout.addWidget(button_clear, 3, 2)
-
-        button_minus = QPushButton("$")
-        button_minus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_minus, 4, 0)
-
-        button_plus = QPushButton("%")
-        button_plus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_plus, 4, 1)
-
-        button_clear = QPushButton("C")
-        button_clear.clicked.connect(self.clear_digits)
-        self.grid_layout.addWidget(button_clear, 4, 2)
-
-        vbox.addLayout(self.grid_layout)
-
-        self.button_enter = QPushButton("Enter")
-        self.button_enter.clicked.connect(self.checkPassword)
-        vbox.addWidget(self.button_enter)
-
-        self.setLayout(vbox)
-        self.digits = ""
-    
-    def add_digit(self):
-        sender = self.sender()
-        self.digits += sender.text()
-        self.line_edit.setText(self.digits)
-
-    def add_comma(self):
-        if "." not in self.digits:
-            self.digits += "."
-            self.line_edit.setText(self.digits)
-
-    def clear_digits(self):
-        self.digits = ""
-        self.line_edit.setText(self.digits)
-    
-    def checkPassword(self):
-        # Simulasikan data jumlah liter air terisi pada galon
-        data = self.line_edit.text()
-        if data == "2339":
-            self.digits = ""
-            self.line_edit.setText(self.digits)
-            dialog = SettingsMenu()
-            dialog.exec_()
-        else:
-            dialog = incorrectPassword()
-            dialog.exec_()
-
-class incorrectPassword(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Login Gagal")
-        self.setFixedSize(230, 90)
-
-        vbox = QVBoxLayout()
-        label = QLabel("Password Anda Salah")
-        label.setAlignment(Qt.AlignCenter)
-        label.setFont(QFont("Arial", 12, QFont.Bold))
-        vbox.addWidget(label)
-
-        button_close = QPushButton("Close")
-        button_close.clicked.connect(self.close)
-
-        vbox.addWidget(button_close)
-        self.setLayout(vbox)
-
-# password menu backwash / flashing
-class PasswordBackwashFlashing(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Masukan Password")
-        self.setFixedSize(370, 300)
-        self.initUI()
-        self.serial = None  # Objek serial untuk komunikasi dengan Arduino
-
-    def initUI(self):
-        # Warna latar belakang RGB
-        self.red = 135
-        self.green = 206
-        self.blue = 235
-        self.background_color = QColor(self.red, self.green, self.blue)
-
-        # Atur warna latar belakang GUI
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), self.background_color)
-        self.setPalette(palette)
-
-        vbox = QVBoxLayout()
-        self.label_input = QLabel("Masukkan Password")
-        self.label_input.setAlignment(Qt.AlignCenter)
-        self.label_input.setFont(QFont("Arial", 18, QFont.Bold))
-        vbox.addWidget(self.label_input)
-
-        self.line_edit = QLineEdit()
-        vbox.addWidget(self.line_edit)
-
-        self.grid_layout = QGridLayout()
-
-        for i in range(1, 10):
-            button = QPushButton(str(i))
-            button.clicked.connect(self.add_digit)
-            self.grid_layout.addWidget(button, (i-1)//3, (i-1)%3)
-
-        button_comma = QPushButton("@")
-        button_comma.clicked.connect(self.add_comma)
-        self.grid_layout.addWidget(button_comma, 3, 0)
-
-        button_0 = QPushButton("0")
-        button_0.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_0, 3, 1)
-
-        button_clear = QPushButton("#")
-        button_clear.clicked.connect(self.clear_digits)
-        self.grid_layout.addWidget(button_clear, 3, 2)
-
-        button_minus = QPushButton("$")
-        button_minus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_minus, 4, 0)
-
-        button_plus = QPushButton("%")
-        button_plus.clicked.connect(self.add_digit)
-        self.grid_layout.addWidget(button_plus, 4, 1)
-
-        button_clear = QPushButton("C")
-        button_clear.clicked.connect(self.clear_digits)
-        self.grid_layout.addWidget(button_clear, 4, 2)
-
-        vbox.addLayout(self.grid_layout)
-
-        self.button_enter = QPushButton("Enter")
-        self.button_enter.clicked.connect(self.checkPassword)
-        vbox.addWidget(self.button_enter)
-
-        self.setLayout(vbox)
-        self.digits = ""
-    
-    def add_digit(self):
-        sender = self.sender()
-        self.digits += sender.text()
-        self.line_edit.setText(self.digits)
-
-    def add_comma(self):
-        if "." not in self.digits:
-            self.digits += "."
-            self.line_edit.setText(self.digits)
-
-    def clear_digits(self):
-        self.digits = ""
-        self.line_edit.setText(self.digits)
-    
-    def checkPassword(self):
-        # Simulasikan data jumlah liter air terisi pada galon
-        data = self.line_edit.text()
-        if data == "1923":
-            self.digits = ""
-            self.line_edit.setText(self.digits)
-            dialog = BackwashFlashingMenu()
-            dialog.exec_()
-        else:
-            dialog = incorrectPassword()
-            dialog.exec_()
 
 # Main WIndow
 class MainWindow(QWidget):
@@ -842,22 +62,26 @@ class MainWindow(QWidget):
 
         self.layout = QVBoxLayout()
         # Label untuk status machine
-        #globals.MACHINE = machine
         self.label_machine = QLabel(self)
         self.label_machine.setGeometry(10, 5, 300, 25)
         self.label_machine.setFont(QFont("Arial", 15))
         self.label_machine.setAlignment(Qt.AlignLeft)
         self.label_machine.setStyleSheet("color: white")
-        self.label_machine.setText(f"Machine : {globals.MACHINE}")
-        #self.label_machine.setText("Machine : Initializing")
+        self.label_machine.setText(f"Machine : {globals.STATUS}")
+        
+        self.label_galon_status= QLabel(self)
+        self.label_galon_status.setGeometry(10, 35, 300, 25)
+        self.label_galon_status.setFont(QFont("Arial", 15))
+        self.label_galon_status.setAlignment(Qt.AlignLeft)
+        self.label_galon_status.setStyleSheet("color: white")
+        self.label_galon_status.setText(f"Galon : {globals.GALON}")
 
-        # Label untuk status water
-        #self.label_water = QLabel(self)
-        #self.label_water.setGeometry(1610, 5, 300, 25)
-        #self.label_water.setFont(QFont("Arial", 15))
-        #self.label_water.setAlignment(Qt.AlignRight)
-        #self.label_water.setStyleSheet("color: white")
-        #self.label_water.setText(f"Water : {water}")
+        self.label_tumbler_status= QLabel(self)
+        self.label_tumbler_status.setGeometry(10, 65, 300, 25)
+        self.label_tumbler_status.setFont(QFont("Arial", 15))
+        self.label_tumbler_status.setAlignment(Qt.AlignLeft)
+        self.label_tumbler_status.setStyleSheet("color: white")
+        self.label_tumbler_status.setText(f"Tumbler : {globals.TUMBLER}")
 
         #label untuk datetime
         self.label_datetime = QLabel(self)
@@ -888,6 +112,11 @@ class MainWindow(QWidget):
         self.label_galon.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_galon.setAlignment(Qt.AlignCenter)
         self.label_galon.setStyleSheet("background-color: white")
+        #tombol bilas galon
+        self.bilas_galon_button = QPushButton("Bilas Galon",self)
+        self.bilas_galon_button.setGeometry(235, 950, 310, 40)
+        self.bilas_galon_button.setFont(QFont("Arial", 24, QFont.Bold))
+        self.bilas_galon_button.setStyleSheet("background-color: skyblue")
 
         # Tombol transaksi air tumbler
         self.tumbler_button = QPushButton(self)
@@ -895,10 +124,15 @@ class MainWindow(QWidget):
         self.tumbler_button.setStyleSheet("QPushButton { border-image: url(tumbler.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
         # label air tumbler
         self.label_tumbler = QLabel("Air Tumbler",self)
-        self.label_tumbler.setGeometry(1475, 910, 200, 40)
+        self.label_tumbler.setGeometry(1425, 910, 300, 40)
         self.label_tumbler.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_tumbler.setAlignment(Qt.AlignCenter)
         self.label_tumbler.setStyleSheet("background-color: white")
+        #tombol bilas galon
+        self.bilas_tumbler_button = QPushButton("Bilas Tumbler",self)
+        self.bilas_tumbler_button.setGeometry(1425, 953, 300, 40)
+        self.bilas_tumbler_button.setFont(QFont("Arial", 24, QFont.Bold))
+        self.bilas_tumbler_button.setStyleSheet("background-color: skyblue")
 
         # ph
         self.ph = QPushButton(self)
@@ -918,6 +152,12 @@ class MainWindow(QWidget):
         self.label_quality.setFont(QFont("Arial", 22, QFont.Bold))
         self.label_quality.setAlignment(Qt.AlignCenter)
         self.label_quality.setStyleSheet("background-color: white")
+        #tombol kualitas air
+        self.kualitas_air_button = QPushButton("Cek Kualitas Air",self)
+        self.kualitas_air_button.setGeometry(835, 880, 280, 40)
+        self.kualitas_air_button.setFont(QFont("Arial", 20, QFont.Bold))
+        self.kualitas_air_button.setStyleSheet("background-color: skyblue")
+
         # Gambar untuk Turbidity
         self.turbidity = QPushButton(self)
         self.turbidity.setGeometry(958, 720, 170, 120)
@@ -930,9 +170,9 @@ class MainWindow(QWidget):
         self.nilai_turbidity.setStyleSheet("background-color: white")
         self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
         # label turbidity
-        self.label_turbidity = QLabel("Turbidity",self)
+        self.label_turbidity = QLabel("TDS",self)
         self.label_turbidity.setGeometry(985, 740, 120, 30)
-        self.label_turbidity.setFont(QFont("Arial", 16, QFont.Bold))
+        self.label_turbidity.setFont(QFont("Arial", 18, QFont.Bold))
         self.label_turbidity.setAlignment(Qt.AlignCenter)
         
         # pilih pengisian air
@@ -953,10 +193,15 @@ class MainWindow(QWidget):
         self.backwash.setStyleSheet("QPushButton { border-image: url(backwash.png) 0 0 0 0 stretch stretch; }")
 
         # when click button
-        self.galon_button.clicked.connect(self.showGalonPopup)
-        self.tumbler_button.clicked.connect(self.showTumblerPopup)
+        #self.galon_button.clicked.connect(self.showGalonPopup)
+        self.galon_button.clicked.connect(self.checkPasswordMenuGalon)
+        #self.tumbler_button.clicked.connect(self.showTumblerPopup)
+        self.tumbler_button.clicked.connect(self.checkPasswordTmblerGalon)
         self.backwash.clicked.connect(self.showBackwashFlashing)
         self.settings.clicked.connect(self.showPasswordSettings)
+        self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(run="3"))
+        self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(run="4"))
+        self.bilas_tumbler_button.clicked.connect(lambda: self.send_instruction_to_controller(run="5"))
 
         self.label_serial = QLabel("Panjang Data",self)
         self.label_serial.setGeometry(860, 990, 200, 100)
@@ -974,6 +219,10 @@ class MainWindow(QWidget):
         self.timer.timeout.connect(self.refresh_data) # update data dan tampilam aplikasi
         self.timer.start(100)  # Refresh setiap 100 milidetik (0.1 detik)
 
+        self.timer_sensor = QTimer(self)
+        self.timer_sensor.timeout.connect(self.refresh_ph_turbidity) # update data dan tampilam aplikasi
+        self.timer_sensor.start(250)  # Refresh setiap 250 milidetik
+
         # timer untuk refresh datetime
         self.timer_datetime = QTimer(self)
         self.timer_datetime.timeout.connect(self.update_datetime)
@@ -985,20 +234,23 @@ class MainWindow(QWidget):
         self.player.setNotifyInterval(100)  # Update every 100 milliseconds
         self.player.mediaStatusChanged.connect(self.handleMediaStatusChanged)
 
-        self.file_path = os.path.join(os.getcwd(), 'Selamat-Datang.mp3')
+        self.file_path = os.path.join(os.getcwd(), 'voice/Selamat-Datang.mp3')
         self.url = QUrl.fromLocalFile(self.file_path)
         self.content = QMediaContent(self.url)
-        
+     
         self.toggleAudioPlayback()
 
     def refresh_data(self):
-        self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
-        self.label_ph.setText(f"{globals.PH}")
-        #contoh
-        globals.MACHINE = "initializing" 
-        globals.WATER = "ready"
+        #self.label_ph.setText(f"{globals.DATA_PH}")
+        #self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
         self.label_machine.setText(f"Machine : {globals.STATUS}")
-        #self.label_water.setText(f"Water : {globals.WATER}")
+        self.label_galon_status.setText(f"Galon : {globals.GALON}")
+        self.label_tumbler_status.setText(f"Tumbler : {globals.TUMBLER}")
+
+    def refresh_ph_turbidity(self):
+        if globals.STATUS == "ready" and globals.GALON == "ready" and globals.TUMBLER == "ready":
+            self.label_ph.setText(f"{globals.DATA_PH}")
+            self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
 
     def update_datetime(self):
         current_datetime = QDateTime.currentDateTime()
@@ -1013,88 +265,88 @@ class MainWindow(QWidget):
         while True:
             val = ser.readline()
             panjang_data_serial = len(val)
-            #print(f"panjang data: {panjang_data_serial}")
+            
             self.label_serial.setText(f"{panjang_data_serial}")
-            if(len(val) > 1):
-                data = (val.decode('utf-8').strip())
-                json_data = json.loads(data)
-                print("Data Masuk : ", json_data)
-                # Mengakses nilai-nilai dalam data JSON
-                data = json_data['data']
-                mode = json_data['mode']
-                globals.COMMAND = json_data['command']
-                globals.ID = json_data['id']
-                globals.PH = data['data0']
-                globals.TURBIDITY = data['data1']
-                globals.VOLUME = data['data2']
-                globals.WADAH = mode['wadah']
-                globals.DATA_VOLUME = mode['volume']
-                globals.SATUAN = mode['satuan']
-                globals.STATUS = mode['status']
+            if(len(val) > 10):
+                print(f"panjang data: {panjang_data_serial}")
+                #print(val)
+                #data = val.decode('utf-8').strip()
+                data = val.decode('latin-1').strip()
+
+                try:
+                    json_data = json.loads(data)
+                    data = json_data['data']
+                    mode = json_data['mode']
+                    #globals.COMMAND = json_data['command']
+                    globals.ID = json_data['id']
+                    globals.PH = data['data0']
+                    globals.TURBIDITY = data['data1']
+                    globals.GALON = mode['galon'] #if mode['galon'] != "" else None
+                    globals.TUMBLER = mode['tumbler'] #if mode['tumbler'] != "" else None
+                    globals.STATUS = mode['status']
+                    #sprint("galon: ", mode['galon'], " | ", "tumbler: ", mode['tumbler'])
+
+                    if data['data0'] != "" or data['data0'] != None:
+                        globals.DATA_PH = data['data0']
+                        #print("ph: ",globals.DATA_PH)
+                    if data['data1'] != "" or data['data1'] != None:
+                        globals.DATA_TURBIDITY = data['data1']
+                        #print("turbidity: ",globals.DATA_TURBIDITY)
+
+                except json.decoder.JSONDecodeError:
+                    print("Data JSON tidak valid:", data)
+                    globals.PH = "-"
+                    globals.TURBIDITY = "-"
             else:
                 globals.PH = "-"
                 globals.TURBIDITY= "-"
-    
-    def showGalonPopup(self):        
-        if globals.STATUS == "ready":
-            ## komunikasi serial
-            galon_data = "19"
-            ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
-            data = {
-                "command": "read",
-                "id": "00001",
-                "data": {
-                    "data0": "turbidity",
-                    "data1": "ph",
-                    "data2": "volume"
-                },
-                "mode": {
-                    "wadah": "galon",
-                    "volume": str(galon_data),
-                    "satuan": "liter",
-                    "status": ""
-                },
-                "run": "1"
-            }
-            try:
-                # Mengubah data menjadi format JSON
-                json_data = json.dumps(data)
-                
-                # Mengirim data ke Arduino melalui komunikasi serial
-                ser.write(json_data.encode())
-                print("Data berhasil dikirim ke Arduino:", json_data)
-            except serial.SerialException as e:
-                print("Terjadi kesalahan pada port serial:", str(e))
-            
-            time.sleep(1)
+
+    def checkPasswordMenuGalon(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        dialog = PasswordGalonMenu()
+        dialog.exec_()
+        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+        dialog.exec_()
+        
+    def showGalonPopup(self):
+        if globals.GALON == "ready":
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            dialog = GalonPopup(galon_data, parent=self)
+            dialog = GalonPopup(parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         else :
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            info = "Mesin Belum Siap"
+            info = "Air Galon Belum Siap"
             dialog = FailedTransactionPopup(info, parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
+    
+    def checkPasswordTmblerGalon(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        dialog = PasswordTumblerMenu()
+        dialog.exec_()
+        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+        dialog.exec_()
 
-    def showTumblerPopup(self):     
-        if globals.STATUS == "ready":
+    def showTumblerPopup(self): 
+        if globals.TUMBLER == "ready":
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            dialog = TumnlerPopup(parent=self)
+            dialog = TumblerPopup(parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         else:
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            info = "Mesin Belum Siap"
+            info = "Air Tumbler Belum Siap"
             dialog = FailedTransactionPopup(info, parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
-
+        
     def showBackwashFlashing(self):
         dialog = BackwashFlashingMenu()
         dialog.exec_()
@@ -1107,10 +359,6 @@ class MainWindow(QWidget):
         dialog = PasswordSettings()
         dialog.exec_()
     
-    def showPasswordBackwashFlashing(self):
-        dialog = PasswordBackwashFlashing()
-        dialog.exec_()
-    
     def toggleAudioPlayback(self):
         if self.player.state() == QMediaPlayer.PlayingState:
             self.player.stop()
@@ -1121,6 +369,37 @@ class MainWindow(QWidget):
     def handleMediaStatusChanged(self, status):
         if status == QMediaPlayer.EndOfMedia:
             self.player.play()
+
+    def send_instruction_to_controller(self, run):
+        #print("run : ", run)
+        ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
+        data = {
+            "command": "read",
+            "id": "00001",
+            "data": {
+                "data0": "turbidity",
+                "data1": "ph",
+                "data2": "volume"
+            },
+            "mode": {
+                "galon": "",
+                "volume": "",
+                "tumbler": "",
+                "status": ""
+            },
+            "run": str(run)
+        }
+        try:
+            # Mengubah data menjadi format JSON
+            json_data = json.dumps(data)
+            
+            # Mengirim data ke Arduino melalui komunikasi serial
+            ser.write(json_data.encode())
+            #print("Data berhasil dikirim ke Arduino:", json_data)
+        except serial.SerialException as e:
+            print("Terjadi kesalahan pada port serial:", str(e))
+
+        time.sleep(1)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

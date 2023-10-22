@@ -9,22 +9,23 @@ from PyQt5.QtWidgets import (
     QLabel, 
     QVBoxLayout, 
     QDesktopWidget, 
-    QPushButton,
+    QPushButton
 )
 from PyQt5.QtGui import (
     QFont,
-    QColor
+    QColor,
+    QIcon
 )
 from PyQt5.QtCore import (
     Qt, 
     QTimer,
     QDateTime,
-    QUrl
+    QUrl, QSize
 )
 from lib import globals
 from lib.menu_galon import GalonPopup, PasswordGalonMenu
 from lib.menu_tumbler import TumblerPopup, FailedTransactionPopup, PasswordTumblerMenu
-from lib.menu_backwash_flashing import BackwashFlashingMenu
+from lib.menu_report import ReportMenu
 from lib.menu_settings import SettingsMenu, PasswordSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
@@ -187,17 +188,17 @@ class MainWindow(QWidget):
         self.settings.setGeometry(1825, 960, 100, 100)
         self.settings.setStyleSheet("QPushButton { border-image: url(settings.png) 0 0 0 0 stretch stretch; }")
 
-        # backwash
-        self.backwash = QPushButton(self)
-        self.backwash.setGeometry(5, 965, 80, 80)
-        self.backwash.setStyleSheet("QPushButton { border-image: url(backwash.png) 0 0 0 0 stretch stretch; }")
-
+        # report
+        self.report = QPushButton(self)
+        self.report.setGeometry(5, 965, 80, 80)
+        self.report.setStyleSheet("QPushButton { border-image: url(report.png) 0 0 0 0 stretch stretch; }")
+            
         # when click button
         #self.galon_button.clicked.connect(self.showGalonPopup)
         self.galon_button.clicked.connect(self.checkPasswordMenuGalon)
         #self.tumbler_button.clicked.connect(self.showTumblerPopup)
         self.tumbler_button.clicked.connect(self.checkPasswordTmblerGalon)
-        self.backwash.clicked.connect(self.showBackwashFlashing)
+        self.report.clicked.connect(self.showReport)
         self.settings.clicked.connect(self.showPasswordSettings)
         self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(run="3"))
         self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(run="4"))
@@ -234,7 +235,7 @@ class MainWindow(QWidget):
         self.player.setNotifyInterval(100)  # Update every 100 milliseconds
         self.player.mediaStatusChanged.connect(self.handleMediaStatusChanged)
 
-        self.file_path = os.path.join(os.getcwd(), 'Selamat-Datang.mp3')
+        self.file_path = os.path.join(os.getcwd(), 'voice/Selamat-Datang.mp3')
         self.url = QUrl.fromLocalFile(self.file_path)
         self.content = QMediaContent(self.url)
      
@@ -371,8 +372,8 @@ class MainWindow(QWidget):
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         
-    def showBackwashFlashing(self):
-        dialog = BackwashFlashingMenu()
+    def showReport(self):
+        dialog = ReportMenu()
         dialog.exec_()
     
     def showSettings(self):

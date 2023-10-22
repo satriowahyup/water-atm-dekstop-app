@@ -1,4 +1,5 @@
-import serial, time, os, json
+import serial, time, json, csv, os, pytz
+from datetime import datetime
 from PyQt5.QtWidgets import ( 
     QLabel, 
     QVBoxLayout, 
@@ -221,7 +222,14 @@ class JenisAirPopup(QDialog):
         self.digits = ""
 
     def send_data_to_arduino(self, volume, status):
-        #if globals.STATUS == "ready" and globals.TUMBLER == "ready":
+        jakarta_timezone = pytz.timezone('Asia/Jakarta')
+        current_time = datetime.now(jakarta_timezone).strftime("%Y-%m-%d %H:%M:%S")
+        nama_file = 'report.csv'
+        path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
+        header = ['Jenis Pengisian', 'Jenis Air', 'Volume', 'Datetime (WIB)']
+        fix_volume = volume + "mL"
+        data_baru = ['Tumbler', status , fix_volume, current_time]
+        
         if globals.TUMBLER == "ready":
             ## komunikasi serial
             ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
@@ -247,7 +255,9 @@ class JenisAirPopup(QDialog):
                 
                 # Mengirim data ke Arduino melalui komunikasi serial
                 ser.write(json_data.encode())
-                #print("Data berhasil dikirim ke Arduino:", json_data)
+                
+                # insert data to csv
+                self.tambah_data_ke_csv(nama_file, path, data_baru, header)
             except serial.SerialException as e:
                 print("Terjadi kesalahan pada port serial:", str(e))
 
@@ -261,6 +271,17 @@ class JenisAirPopup(QDialog):
     def showStatusTumblerPopup(self):
         dialog = StstusPengisianTumbler()
         dialog.exec_()
+    
+    def tambah_data_ke_csv(self, nama_file, path, data_baru, header):
+        file_penuh_path = os.path.join(path, nama_file)
+
+        # menulis header jika file tidak ada
+        file_ada = os.path.isfile(file_penuh_path)
+        with open(file_penuh_path, mode='a', newline='') as file_csv:
+            writer = csv.writer(file_csv)
+            if not file_ada:
+                writer.writerow(header)
+            writer.writerow(data_baru)
 
 # password menu settings
 class PasswordTumblerMenu(QDialog):
