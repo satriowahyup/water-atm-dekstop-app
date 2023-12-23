@@ -1,14 +1,8 @@
-import sys
 import csv
-from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QScrollArea, QDesktopWidget
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QTableWidget, QTableWidgetItem, QScrollArea, QDesktopWidget
 from PyQt5.QtGui import (
     QFont,
-    QColor
 )
-from PyQt5.QtCore import (
-    Qt,
-)
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
 class ReportMenu(QDialog):
     def __init__(self):
@@ -21,6 +15,11 @@ class ReportMenu(QDialog):
         self.scroll = QScrollArea()
         self.vbox.addWidget(self.scroll)
         self.setLayout(self.vbox)
+
+        # Tambahkan tombol close
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Close)
+        self.button_box.rejected.connect(self.close)
+        self.vbox.addWidget(self.button_box)
 
         path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/report.csv'  # Ganti dengan path sesuai dengan direktori Anda
         with open(path, 'r') as file_csv:

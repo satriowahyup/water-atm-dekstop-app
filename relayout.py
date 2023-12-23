@@ -114,10 +114,10 @@ class MainWindow(QWidget):
         self.label_galon.setAlignment(Qt.AlignCenter)
         self.label_galon.setStyleSheet("background-color: white")
         #tombol bilas galon
-        self.bilas_galon_button = QPushButton("Bilas Galon",self)
-        self.bilas_galon_button.setGeometry(235, 950, 310, 40)
-        self.bilas_galon_button.setFont(QFont("Arial", 24, QFont.Bold))
-        self.bilas_galon_button.setStyleSheet("background-color: skyblue")
+        # self.bilas_galon_button = QPushButton("Bilas Galon",self)
+        # self.bilas_galon_button.setGeometry(235, 950, 310, 40)
+        # self.bilas_galon_button.setFont(QFont("Arial", 24, QFont.Bold))
+        # self.bilas_galon_button.setStyleSheet("background-color: skyblue")
 
         # Tombol transaksi air tumbler
         self.tumbler_button = QPushButton(self)
@@ -129,11 +129,11 @@ class MainWindow(QWidget):
         self.label_tumbler.setFont(QFont("Arial", 24, QFont.Bold))
         self.label_tumbler.setAlignment(Qt.AlignCenter)
         self.label_tumbler.setStyleSheet("background-color: white")
-        #tombol bilas galon
-        self.bilas_tumbler_button = QPushButton("Bilas Tumbler",self)
-        self.bilas_tumbler_button.setGeometry(1425, 953, 300, 40)
-        self.bilas_tumbler_button.setFont(QFont("Arial", 24, QFont.Bold))
-        self.bilas_tumbler_button.setStyleSheet("background-color: skyblue")
+        #tombol bilas tumler
+        # self.bilas_tumbler_button = QPushButton("Bilas Tumbler",self)
+        # self.bilas_tumbler_button.setGeometry(1425, 953, 300, 40)
+        # self.bilas_tumbler_button.setFont(QFont("Arial", 24, QFont.Bold))
+        # self.bilas_tumbler_button.setStyleSheet("background-color: skyblue")
 
         # ph
         self.ph = QPushButton(self)
@@ -201,8 +201,8 @@ class MainWindow(QWidget):
         self.report.clicked.connect(self.showReport)
         self.settings.clicked.connect(self.showPasswordSettings)
         self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(run="3"))
-        self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(run="4"))
-        self.bilas_tumbler_button.clicked.connect(lambda: self.send_instruction_to_controller(run="5"))
+        # self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(run="4"))
+        # self.bilas_tumbler_button.clicked.connect(lambda: self.send_instruction_to_controller(run="5"))
 
         self.label_serial = QLabel("Panjang Data",self)
         self.label_serial.setGeometry(860, 990, 200, 100)
