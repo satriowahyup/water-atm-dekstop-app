@@ -17,6 +17,7 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from lib import globals
+from lib.volume_calculation import volume_calculation
 
 class GalonPopup(QDialog):
     def __init__(self, parent=None):
@@ -45,25 +46,26 @@ class GalonPopup(QDialog):
         self.label_input.setFont(QFont("Arial", 16, QFont.Bold))
         vbox.addWidget(self.label_input)
 
-        self.button_YES = QPushButton("YES", self)
-        self.button_YES.setFixedWidth(180)
-        self.button_YES.setFixedHeight(50)
-        self.button_YES.setFont(QFont("Arial", 18, QFont.Bold))
+        self.button_19L = QPushButton("19 Liter", self)
+        self.button_19L.setFixedWidth(180)
+        self.button_19L.setFixedHeight(50)
+        self.button_19L.setFont(QFont("Arial", 18, QFont.Bold))
 
-        self.button_NO = QPushButton("NO", self)
-        self.button_NO.setFixedWidth(180)
-        self.button_NO.setFixedHeight(50)
-        self.button_NO.setFont(QFont("Arial", 16, QFont.Bold))
+        self.button_15L = QPushButton("15 Liter", self)
+        self.button_15L.setFixedWidth(180)
+        self.button_15L.setFixedHeight(50)
+        self.button_15L.setFont(QFont("Arial", 16, QFont.Bold))
 
-        self.button_YES.clicked.connect(lambda: self.send_data_to_arduino(volume="19"))
-        self.button_YES.clicked.connect(self.close)
-        self.button_NO.clicked.connect(self.close)
+        self.button_19L.clicked.connect(lambda: self.send_data_to_arduino(volume="19"))
+        self.button_15L.clicked.connect(lambda: self.send_data_to_arduino(volume="15"))
+        self.button_19L.clicked.connect(self.close)
+        self.button_15L.clicked.connect(self.close)
 
         #vbox.addWidget(self.button_enter)
         vbox.addSpacing(10)
-        vbox.addWidget(self.button_YES, alignment=Qt.AlignHCenter)
+        vbox.addWidget(self.button_19L, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
-        vbox.addWidget(self.button_NO, alignment=Qt.AlignHCenter)
+        vbox.addWidget(self.button_15L, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
 
         self.setLayout(vbox)
@@ -73,9 +75,10 @@ class GalonPopup(QDialog):
         jakarta_timezone = pytz.timezone('Asia/Jakarta')
         current_time = datetime.now(jakarta_timezone).strftime("%Y-%m-%d %H:%M:%S")
         nama_file = 'report.csv'
-        path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
-        header = ['Jenis Pengisian', 'Jenis Air', 'Volume', 'Datetime (WIB)']
-        data_baru = ['Galon', 'normal' , '19L', current_time]
+        #path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
+        path = '/home/admin/Documents/apps/desktop-app/'
+        header = ['Jenis Pengisian', 'Jenis Air', 'Volume (L)', 'Datetime (WIB)']
+        data_baru = ['Galon', 'normal' , int(volume), current_time]
 
         if globals.GALON == "ready":
             ## komunikasi serial
@@ -96,6 +99,13 @@ class GalonPopup(QDialog):
                 },
                 "run": "1"
             }
+
+            # # calculate volume
+            # volume_calculation(total_volume=volume)
+
+            #     # insert data to csv
+            # self.tambah_data_ke_csv(nama_file, path, data_baru, header)
+            
             try:
                 # Mengubah data menjadi format JSON
                 json_data = json.dumps(data)
@@ -103,6 +113,9 @@ class GalonPopup(QDialog):
                 # Mengirim data ke Arduino melalui komunikasi serial
                 ser.write(json_data.encode())
                 
+                # calculate volume
+                volume_calculation(total_volume=volume)
+
                 # insert data to csv
                 self.tambah_data_ke_csv(nama_file, path, data_baru, header)
             except serial.SerialException as e:

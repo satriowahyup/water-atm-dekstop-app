@@ -17,6 +17,7 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from lib import globals
+from lib.volume_calculation import volume_calculation
 
 class TumblerPopup(QDialog):
     def __init__(self, parent=None):
@@ -45,10 +46,10 @@ class TumblerPopup(QDialog):
         self.label_input.setFont(QFont("Arial", 16, QFont.Bold))
         vbox.addWidget(self.label_input)
 
-        self.button_300mL = QPushButton("300mL", self)
-        self.button_300mL.setFixedWidth(180)
-        self.button_300mL.setFixedHeight(50)
-        self.button_300mL.setFont(QFont("Arial", 14, QFont.Bold))
+        self.button_150mL = QPushButton("150mL", self)
+        self.button_150mL.setFixedWidth(180)
+        self.button_150mL.setFixedHeight(50)
+        self.button_150mL.setFont(QFont("Arial", 14, QFont.Bold))
 
         self.button_600mL = QPushButton("600mL", self)
         self.button_600mL.setFixedWidth(180)
@@ -60,18 +61,18 @@ class TumblerPopup(QDialog):
         self.button_900mL.setFixedHeight(50)
         self.button_900mL.setFont(QFont("Arial", 14, QFont.Bold))
 
-        self.button_300mL.clicked.connect(lambda: self.air_popup(volume="300"))
-        self.button_300mL.clicked.connect(self.close)
+        self.button_150mL.clicked.connect(lambda: self.air_popup(volume="0.15"))
+        self.button_150mL.clicked.connect(self.close)
 
-        self.button_600mL.clicked.connect(lambda: self.air_popup(volume="600"))
+        self.button_600mL.clicked.connect(lambda: self.air_popup(volume="0.6"))
         self.button_600mL.clicked.connect(self.close)
 
-        self.button_900mL.clicked.connect(lambda:self.air_popup(volume="900"))
+        self.button_900mL.clicked.connect(lambda:self.air_popup(volume="0.9"))
         self.button_900mL.clicked.connect(self.close)
 
         #vbox.addWidget(self.button_enter)
         vbox.addSpacing(10)
-        vbox.addWidget(self.button_300mL, alignment=Qt.AlignHCenter)
+        vbox.addWidget(self.button_150mL, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
         vbox.addWidget(self.button_600mL, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
@@ -225,9 +226,10 @@ class JenisAirPopup(QDialog):
         jakarta_timezone = pytz.timezone('Asia/Jakarta')
         current_time = datetime.now(jakarta_timezone).strftime("%Y-%m-%d %H:%M:%S")
         nama_file = 'report.csv'
-        path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
-        header = ['Jenis Pengisian', 'Jenis Air', 'Volume', 'Datetime (WIB)']
-        fix_volume = volume + "mL"
+        #path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
+        path = '/home/admin/Documents/apps/desktop-app/'
+        header = ['Jenis Pengisian', 'Jenis Air', 'Volume (L)', 'Datetime (WIB)']
+        fix_volume = float(volume)
         data_baru = ['Tumbler', status , fix_volume, current_time]
         
         if globals.TUMBLER == "ready":
@@ -249,12 +251,22 @@ class JenisAirPopup(QDialog):
                 },
                 "run": "2"
             }
+
+            # # calculate volume 
+            # volume_calculation(total_volume=volume)
+
+            # # insert data to csv
+            # self.tambah_data_ke_csv(nama_file, path, data_baru, header)
+            
             try:
                 # Mengubah data menjadi format JSON
                 json_data = json.dumps(data)
                 
                 # Mengirim data ke Arduino melalui komunikasi serial
                 ser.write(json_data.encode())
+
+                # calculate volume 
+                volume_calculation(total_volume=volume)
                 
                 # insert data to csv
                 self.tambah_data_ke_csv(nama_file, path, data_baru, header)
