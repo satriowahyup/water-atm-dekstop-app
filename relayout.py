@@ -200,8 +200,8 @@ class MainWindow(QWidget):
         self.tumbler_button.clicked.connect(self.checkPasswordTmblerGalon)
         self.report.clicked.connect(self.showReport)
         self.settings.clicked.connect(self.showPasswordSettings)
-        self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(run="3"))
-        self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(run="4"))
+        self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(volume="", run="3"))
+        self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(volume="1", run="1"))
         # self.bilas_tumbler_button.clicked.connect(lambda: self.send_instruction_to_controller(run="5"))
 
         self.label_serial = QLabel("Panjang Data",self)
@@ -395,7 +395,7 @@ class MainWindow(QWidget):
         if status == QMediaPlayer.EndOfMedia:
             self.player.play()
 
-    def send_instruction_to_controller(self, run):
+    def send_instruction_to_controller(self, volume, run):
         #print("run : ", run)
         ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
         data = {
@@ -408,7 +408,7 @@ class MainWindow(QWidget):
             },
             "mode": {
                 "galon": "",
-                "volume": "",
+                "volume": str(volume),
                 "tumbler": "",
                 "status": ""
             },

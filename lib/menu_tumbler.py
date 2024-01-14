@@ -61,13 +61,13 @@ class TumblerPopup(QDialog):
         self.button_900mL.setFixedHeight(50)
         self.button_900mL.setFont(QFont("Arial", 14, QFont.Bold))
 
-        self.button_150mL.clicked.connect(lambda: self.air_popup(volume="0.15"))
+        self.button_150mL.clicked.connect(lambda: self.air_popup(volume="150"))
         self.button_150mL.clicked.connect(self.close)
 
-        self.button_600mL.clicked.connect(lambda: self.air_popup(volume="0.6"))
+        self.button_600mL.clicked.connect(lambda: self.air_popup(volume="600"))
         self.button_600mL.clicked.connect(self.close)
 
-        self.button_900mL.clicked.connect(lambda:self.air_popup(volume="0.9"))
+        self.button_900mL.clicked.connect(lambda:self.air_popup(volume="900"))
         self.button_900mL.clicked.connect(self.close)
 
         #vbox.addWidget(self.button_enter)
@@ -229,8 +229,8 @@ class JenisAirPopup(QDialog):
         #path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
         path = '/home/admin/Documents/apps/desktop-app/'
         header = ['Jenis Pengisian', 'Jenis Air', 'Volume (L)', 'Datetime (WIB)']
-        fix_volume = float(volume)
-        data_baru = ['Tumbler', status , fix_volume, current_time]
+        fix_volume = float(volume) / 1000
+        data_baru = ['Tumbler', status , round(fix_volume, 2), current_time]
         
         if globals.TUMBLER == "ready":
             ## komunikasi serial
@@ -253,7 +253,7 @@ class JenisAirPopup(QDialog):
             }
 
             # # calculate volume 
-            # volume_calculation(total_volume=volume)
+            # volume_calculation(total_volume=round(fix_volume, 2))
 
             # # insert data to csv
             # self.tambah_data_ke_csv(nama_file, path, data_baru, header)
@@ -266,7 +266,7 @@ class JenisAirPopup(QDialog):
                 ser.write(json_data.encode())
 
                 # calculate volume 
-                volume_calculation(total_volume=volume)
+                volume_calculation(total_volume=round(fix_volume, 2))
                 
                 # insert data to csv
                 self.tambah_data_ke_csv(nama_file, path, data_baru, header)
