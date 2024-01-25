@@ -13,17 +13,17 @@ from PyQt5.QtGui import (
     QColor
 )
 from PyQt5.QtCore import (
-    Qt,
+    Qt, 
 )
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from lib import globals
 from lib.volume_calculation import volume_calculation
 
-class GalonPopup(QDialog):
+class TumblerPopup2(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Proses Pengisian Air Galon")
-        self.setFixedSize(270, 200)
+        self.setWindowTitle("Proses Pengisian Air Tumbler 2")
+        self.setFixedSize(290, 260)
         self.initUI()
         self.serial = None  # Objek serial untuk komunikasi dengan Arduino
 
@@ -41,112 +41,54 @@ class GalonPopup(QDialog):
         self.setPalette(palette)
 
         vbox = QVBoxLayout()
-        self.label_input = QLabel("Konfirmasi Pengisian Air")
+        self.label_input = QLabel("Pilih Pengisian Air 2")
         self.label_input.setAlignment(Qt.AlignCenter)
         self.label_input.setFont(QFont("Arial", 16, QFont.Bold))
         vbox.addWidget(self.label_input)
 
-        self.button_19L = QPushButton("19 Liter", self)
-        self.button_19L.setFixedWidth(180)
-        self.button_19L.setFixedHeight(50)
-        self.button_19L.setFont(QFont("Arial", 18, QFont.Bold))
+        self.button_150mL = QPushButton("150mL", self)
+        self.button_150mL.setFixedWidth(180)
+        self.button_150mL.setFixedHeight(50)
+        self.button_150mL.setFont(QFont("Arial", 14, QFont.Bold))
 
-        self.button_15L = QPushButton("15 Liter", self)
-        self.button_15L.setFixedWidth(180)
-        self.button_15L.setFixedHeight(50)
-        self.button_15L.setFont(QFont("Arial", 16, QFont.Bold))
+        self.button_600mL = QPushButton("600mL", self)
+        self.button_600mL.setFixedWidth(180)
+        self.button_600mL.setFixedHeight(50)
+        self.button_600mL.setFont(QFont("Arial", 14, QFont.Bold))
 
-        self.button_19L.clicked.connect(lambda: self.send_data_to_arduino(volume="19"))
-        self.button_15L.clicked.connect(lambda: self.send_data_to_arduino(volume="15"))
-        self.button_19L.clicked.connect(self.close)
-        self.button_15L.clicked.connect(self.close)
+        self.button_900mL = QPushButton("900mL", self)
+        self.button_900mL.setFixedWidth(180)
+        self.button_900mL.setFixedHeight(50)
+        self.button_900mL.setFont(QFont("Arial", 14, QFont.Bold))
+
+        self.button_150mL.clicked.connect(lambda: self.air_popup(volume="150"))
+        self.button_150mL.clicked.connect(self.close)
+
+        self.button_600mL.clicked.connect(lambda: self.air_popup(volume="600"))
+        self.button_600mL.clicked.connect(self.close)
+
+        self.button_900mL.clicked.connect(lambda:self.air_popup(volume="900"))
+        self.button_900mL.clicked.connect(self.close)
 
         #vbox.addWidget(self.button_enter)
         vbox.addSpacing(10)
-        vbox.addWidget(self.button_19L, alignment=Qt.AlignHCenter)
+        vbox.addWidget(self.button_150mL, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
-        vbox.addWidget(self.button_15L, alignment=Qt.AlignHCenter)
+        vbox.addWidget(self.button_600mL, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
+        vbox.addWidget(self.button_900mL, alignment=Qt.AlignHCenter)
 
         self.setLayout(vbox)
         self.digits = ""
 
-    def send_data_to_arduino(self, volume):
-        jakarta_timezone = pytz.timezone('Asia/Jakarta')
-        current_time = datetime.now(jakarta_timezone).strftime("%Y-%m-%d %H:%M:%S")
-        nama_file = 'report.csv'
-        #path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
-        path = '/home/admin/Documents/apps/desktop-app/'
-        header = ['Jenis Pengisian', 'Jenis Air', 'Volume (L)', 'Datetime (WIB)']
-        data_baru = ['Galon', 'normal' , int(volume), current_time]
-
-        if globals.GALON == "ready":
-            ## komunikasi serial
-            ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
-            data = {
-                "command": "read",
-                "id": "00001",
-                "data": {
-                    "data0": "turbidity",
-                    "data1": "ph",
-                    "data2": "volume"
-                },
-                "mode": {
-                    "galon": "",
-                    "volume": str(volume),
-                    "tumbler": "",
-                    "status": ""
-                },
-                "run": "1"
-            }
-
-            # # calculate volume
-            # volume_calculation(total_volume=volume)
-
-            #     # insert data to csv
-            # self.tambah_data_ke_csv(nama_file, path, data_baru, header)
-            
-            try:
-                # Mengubah data menjadi format JSON
-                json_data = json.dumps(data)
-                
-                # Mengirim data ke Arduino melalui komunikasi serial
-                ser.write(json_data.encode())
-                
-                # calculate volume
-                volume_calculation(total_volume=volume)
-
-                # insert data to csv
-                self.tambah_data_ke_csv(nama_file, path, data_baru, header)
-            except serial.SerialException as e:
-                print("Terjadi kesalahan pada port serial:", str(e))
-
-            self.showStatusTumblerPopup
-            time.sleep(1)
-        else :
-            info = "Air Galon Belum Siap"
-            dialog = FailedTransactionPopup(info)
-            dialog.exec_()
-        
-    def showStatusTumblerPopup(self):
-        dialog = StstusPengisianGalon()
+    def air_popup(self, volume):
+        dialog = JenisAirPopup(volume)
         dialog.exec_()
-    
-    def tambah_data_ke_csv(self, nama_file, path, data_baru, header):
-        file_penuh_path = os.path.join(path, nama_file)
 
-        # menulis header jika file tidak ada
-        file_ada = os.path.isfile(file_penuh_path)
-        with open(file_penuh_path, mode='a', newline='') as file_csv:
-            writer = csv.writer(file_csv)
-            if not file_ada:
-                writer.writerow(header)
-            writer.writerow(data_baru)
-
-class StstusPengisianGalon(QDialog):
+class StstusPengisianTumbler(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Air Galon")
+        self.setWindowTitle("Air Tumbler")
         self.setFixedSize(280, 130)
         self.initUI()
 
@@ -181,7 +123,7 @@ class StstusPengisianGalon(QDialog):
 
         self.setLayout(vbox)
 
-class FailedTransactionPopup(QDialog):
+class FailedTransactionPopup2(QDialog):
     def __init__(self, info_machine, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Info Status")
@@ -218,8 +160,143 @@ class FailedTransactionPopup(QDialog):
 
         self.setLayout(vbox)
 
+class JenisAirPopup(QDialog):
+    def __init__(self, volume, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Proses Pengisian Air Tumbler 2")
+        self.setFixedSize(290, 260)
+        self.initUI(volume)
+        self.serial = None  # Objek serial untuk komunikasi dengan Arduino
+
+    def initUI(self, volume):
+        # Warna latar belakang RGB
+        self.red = 135
+        self.green = 206
+        self.blue = 235
+        self.background_color = QColor(self.red, self.green, self.blue)
+
+        # Atur warna latar belakang GUI
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), self.background_color)
+        self.setPalette(palette)
+
+        vbox = QVBoxLayout()
+        self.label_input = QLabel("Pilih Kondisi Air")
+        self.label_input.setAlignment(Qt.AlignCenter)
+        self.label_input.setFont(QFont("Arial", 16, QFont.Bold))
+        vbox.addWidget(self.label_input)
+
+        self.button_normal = QPushButton("Normal", self)
+        self.button_normal.setFixedWidth(180)
+        self.button_normal.setFixedHeight(50)
+        self.button_normal.setFont(QFont("Arial", 14, QFont.Bold))
+
+        self.button_dingin = QPushButton("Dingin", self)
+        self.button_dingin.setFixedWidth(180)
+        self.button_dingin.setFixedHeight(50)
+        self.button_dingin.setFont(QFont("Arial", 14, QFont.Bold))
+
+        self.button_panas = QPushButton("Panas", self)
+        self.button_panas.setFixedWidth(180)
+        self.button_panas.setFixedHeight(50)
+        self.button_panas.setFont(QFont("Arial", 14, QFont.Bold))
+
+        self.button_normal.clicked.connect(lambda: self.send_data_to_arduino(volume, status="normal"))
+        self.button_normal.clicked.connect(self.close)
+
+        self.button_dingin.clicked.connect(lambda: self.send_data_to_arduino(volume, status="dingin"))
+        self.button_dingin.clicked.connect(self.close)
+
+        self.button_panas.clicked.connect(lambda:self.send_data_to_arduino(volume, status="panas"))
+        self.button_panas.clicked.connect(self.close)
+
+        #vbox.addWidget(self.button_enter)
+        vbox.addSpacing(10)
+        vbox.addWidget(self.button_panas, alignment=Qt.AlignHCenter)
+        vbox.addSpacing(10)
+        vbox.addWidget(self.button_dingin, alignment=Qt.AlignHCenter)
+        vbox.addSpacing(10)
+        vbox.addWidget(self.button_normal, alignment=Qt.AlignHCenter)
+
+        self.setLayout(vbox)
+        self.digits = ""
+
+    def send_data_to_arduino(self, volume, status):
+        jakarta_timezone = pytz.timezone('Asia/Jakarta')
+        current_time = datetime.now(jakarta_timezone).strftime("%Y-%m-%d %H:%M:%S")
+        nama_file = 'report.csv'
+        #path = '/home/satrio/Documents/Data Laptop Asus - Satrio/Satrio/Personal Project/Water ATM/desktop-app/'
+        path = '/home/admin/Documents/apps/desktop-app/'
+        header = ['Jenis Pengisian', 'Jenis Air', 'Volume (L)', 'Datetime (WIB)']
+        fix_volume = float(volume) / 1000
+        data_baru = ['Tumbler', status , round(fix_volume, 2), current_time]
+        
+        if globals.TUMBLER2 == "ready":
+            ## komunikasi serial
+            ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
+            data = {
+                "command": "read",
+                "id": "00001",
+                "data": {
+                    "data0": "turbidity",
+                    "data1": "ph",
+                    "data2": "volume"
+                },
+                "mode": {
+                    "galon": "",
+                    "volume": str(volume),
+                    "tumbler": "",
+                    "status": str(status)
+                },
+                "run": "2"
+            }
+
+            # # calculate volume 
+            # volume_calculation(total_volume=round(fix_volume, 2))
+
+            # # insert data to csv
+            # self.tambah_data_ke_csv(nama_file, path, data_baru, header)
+            
+            try:
+                # Mengubah data menjadi format JSON
+                json_data = json.dumps(data)
+                
+                # Mengirim data ke Arduino melalui komunikasi serial
+                ser.write(json_data.encode())
+
+                # calculate volume 
+                volume_calculation(total_volume=round(fix_volume, 2))
+                
+                # insert data to csv
+                self.tambah_data_ke_csv(nama_file, path, data_baru, header)
+            except serial.SerialException as e:
+                print("Terjadi kesalahan pada port serial:", str(e))
+
+            self.showStatusTumblerPopup
+            time.sleep(1)
+        else :
+            info = "Air Tumbler 2 Belum Siap"
+            dialog = FailedTransactionPopup2(info)
+            dialog.exec_()
+         
+    def showStatusTumblerPopup(self):
+        dialog = StstusPengisianTumbler()
+        dialog.exec_()
+    
+    def tambah_data_ke_csv(self, nama_file, path, data_baru, header):
+        file_penuh_path = os.path.join(path, nama_file)
+
+        # menulis header jika file tidak ada
+        file_ada = os.path.isfile(file_penuh_path)
+        with open(file_penuh_path, mode='a', newline='') as file_csv:
+            writer = csv.writer(file_csv)
+            if not file_ada:
+                writer.writerow(header)
+            writer.writerow(data_baru)
+
 # password menu settings
-class PasswordGalonMenu(QDialog):
+class PasswordTumblerMenu2(QDialog):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.setWindowTitle("Masukan Password")
@@ -309,7 +386,7 @@ class PasswordGalonMenu(QDialog):
         if data == "2339":
             self.digits = ""
             self.line_edit.setText(self.digits)
-            dialog = GalonPopup()
+            dialog = TumblerPopup2()
             dialog.exec_()
         else:
             dialog = incorrectPassword()

@@ -23,8 +23,9 @@ from PyQt5.QtCore import (
     QUrl, QSize
 )
 from lib import globals
-from lib.menu_galon import GalonPopup, PasswordGalonMenu
-from lib.menu_tumbler import TumblerPopup, FailedTransactionPopup, PasswordTumblerMenu
+from lib.menu_tumbler1 import TumblerPopup1, FailedTransactionPopup1, PasswordTumblerMenu1
+from lib.menu_tumbler2 import TumblerPopup2, FailedTransactionPopup2, PasswordTumblerMenu2
+from lib.menu_tumbler3 import TumblerPopup3, FailedTransactionPopup3, PasswordTumblerMenu3
 from lib.menu_report import ReportMenu
 from lib.menu_settings import SettingsMenu, PasswordSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -70,19 +71,26 @@ class MainWindow(QWidget):
         self.label_machine.setStyleSheet("color: white")
         self.label_machine.setText(f"Machine : {globals.STATUS}")
         
-        self.label_galon_status= QLabel(self)
-        self.label_galon_status.setGeometry(10, 35, 300, 25)
-        self.label_galon_status.setFont(QFont("Arial", 15))
-        self.label_galon_status.setAlignment(Qt.AlignLeft)
-        self.label_galon_status.setStyleSheet("color: white")
-        self.label_galon_status.setText(f"Galon : {globals.GALON}")
+        self.label_tumbler1_status= QLabel(self)
+        self.label_tumbler1_status.setGeometry(10, 35, 300, 25)
+        self.label_tumbler1_status.setFont(QFont("Arial", 15))
+        self.label_tumbler1_status.setAlignment(Qt.AlignLeft)
+        self.label_tumbler1_status.setStyleSheet("color: white")
+        self.label_tumbler1_status.setText(f"Tumbler 1 : {globals.TUMBLER1}")
 
-        self.label_tumbler_status= QLabel(self)
-        self.label_tumbler_status.setGeometry(10, 65, 300, 25)
-        self.label_tumbler_status.setFont(QFont("Arial", 15))
-        self.label_tumbler_status.setAlignment(Qt.AlignLeft)
-        self.label_tumbler_status.setStyleSheet("color: white")
-        self.label_tumbler_status.setText(f"Tumbler : {globals.TUMBLER}")
+        self.label_tumbler2_status= QLabel(self)
+        self.label_tumbler2_status.setGeometry(10, 65, 300, 25)
+        self.label_tumbler2_status.setFont(QFont("Arial", 15))
+        self.label_tumbler2_status.setAlignment(Qt.AlignLeft)
+        self.label_tumbler2_status.setStyleSheet("color: white")
+        self.label_tumbler2_status.setText(f"Tumbler 2: {globals.TUMBLER2}")
+
+        self.label_tumbler3_status= QLabel(self)
+        self.label_tumbler3_status.setGeometry(10, 95, 300, 25)
+        self.label_tumbler3_status.setFont(QFont("Arial", 15))
+        self.label_tumbler3_status.setAlignment(Qt.AlignLeft)
+        self.label_tumbler3_status.setStyleSheet("color: white")
+        self.label_tumbler3_status.setText(f"Tumbler 3: {globals.TUMBLER3}")
 
         #label untuk datetime
         self.label_datetime = QLabel(self)
@@ -98,50 +106,46 @@ class MainWindow(QWidget):
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("color: black")
 
-        # Gambar mata air
-        self.water_image = QPushButton(self)
-        self.water_image.setGeometry(530, 110, 850, 420)
-        self.water_image.setStyleSheet("QPushButton { border-image: url(water-icon.png) 0 0 0 0 stretch stretch; }")
+        # Tombol transaksi tumbler 1
+        self.tumbler1_button = QPushButton(self)
+        self.tumbler1_button.setGeometry(150, 515, 480, 410)  # Atur posisi dan ukuran tombol
+        self.tumbler1_button.setStyleSheet("QPushButton { border-image: url(tumbler.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
+        # label air tumbler 1
+        self.label_tumbler1= QLabel("Air Tumbler 1",self)
+        self.label_tumbler1.setGeometry(255, 915, 310, 40)
+        self.label_tumbler1.setFont(QFont("Arial", 24, QFont.Bold))
+        self.label_tumbler1.setAlignment(Qt.AlignCenter)
+        self.label_tumbler1.setStyleSheet("background-color: white")
 
-        # Tombol transaksi air galon
-        self.galon_button = QPushButton(self)
-        self.galon_button.setGeometry(120, 500, 550, 430)  # Atur posisi dan ukuran tombol
-        self.galon_button.setStyleSheet("QPushButton { border-image: url(galon.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
-        # label air galon
-        self.label_galon = QLabel("Air Galon",self)
-        self.label_galon.setGeometry(235, 905, 310, 40)
-        self.label_galon.setFont(QFont("Arial", 24, QFont.Bold))
-        self.label_galon.setAlignment(Qt.AlignCenter)
-        self.label_galon.setStyleSheet("background-color: white")
-        #tombol bilas galon
-        self.bilas_galon_button = QPushButton("Bilas Galon",self)
-        self.bilas_galon_button.setGeometry(235, 950, 310, 40)
-        self.bilas_galon_button.setFont(QFont("Arial", 24, QFont.Bold))
-        self.bilas_galon_button.setStyleSheet("background-color: skyblue")
+        # Tombol transaksi air tumbler 2
+        self.tumbler2_button = QPushButton(self)
+        self.tumbler2_button.setGeometry(725,515, 480, 410)
+        self.tumbler2_button.setStyleSheet("QPushButton { border-image: url(tumbler.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
+        # label air tumbler 2
+        self.label_tumbler2 = QLabel("Air Tumbler 2",self)
+        self.label_tumbler2.setGeometry(830, 910, 300, 40)
+        self.label_tumbler2.setFont(QFont("Arial", 24, QFont.Bold))
+        self.label_tumbler2.setAlignment(Qt.AlignCenter)
+        self.label_tumbler2.setStyleSheet("background-color: white")
 
-        # Tombol transaksi air tumbler
-        self.tumbler_button = QPushButton(self)
-        self.tumbler_button.setGeometry(1320,515, 480, 410)
-        self.tumbler_button.setStyleSheet("QPushButton { border-image: url(tumbler.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
-        # label air tumbler
-        self.label_tumbler = QLabel("Air Tumbler",self)
-        self.label_tumbler.setGeometry(1425, 910, 300, 40)
-        self.label_tumbler.setFont(QFont("Arial", 24, QFont.Bold))
-        self.label_tumbler.setAlignment(Qt.AlignCenter)
-        self.label_tumbler.setStyleSheet("background-color: white")
-        #tombol bilas tumler
-        # self.bilas_tumbler_button = QPushButton("Bilas Tumbler",self)
-        # self.bilas_tumbler_button.setGeometry(1425, 953, 300, 40)
-        # self.bilas_tumbler_button.setFont(QFont("Arial", 24, QFont.Bold))
-        # self.bilas_tumbler_button.setStyleSheet("background-color: skyblue")
+        # Tombol transaksi air tumbler 3
+        self.tumbler3_button = QPushButton(self)
+        self.tumbler3_button.setGeometry(1320,515, 480, 410)
+        self.tumbler3_button.setStyleSheet("QPushButton { border-image: url(tumbler.png) 0 0 0 0 stretch stretch; }")  # Atur background gambar
+        # label air tumbler 3
+        self.label_tumbler3 = QLabel("Air Tumbler 3",self)
+        self.label_tumbler3.setGeometry(1425, 910, 300, 40)
+        self.label_tumbler3.setFont(QFont("Arial", 24, QFont.Bold))
+        self.label_tumbler3.setAlignment(Qt.AlignCenter)
+        self.label_tumbler3.setStyleSheet("background-color: white")
 
         # ph
         self.ph = QPushButton(self)
-        self.ph.setGeometry(798, 700, 250, 140)
+        self.ph.setGeometry(798, 180, 250, 140)
         self.ph.setStyleSheet("QPushButton { border-image: url(ph.png) 0 0 0 0 stretch stretch; }")
         # label nilai ph
         self.label_ph = QLabel(self)
-        self.label_ph.setGeometry(838, 840, 120, 30)
+        self.label_ph.setGeometry(838, 320, 120, 30)
         self.label_ph.setFont(QFont("Arial", 18))
         self.label_ph.setAlignment(Qt.AlignCenter)
         self.label_ph.setStyleSheet("background-color: white")
@@ -149,36 +153,36 @@ class MainWindow(QWidget):
         
         # label kualitas air
         self.label_quality = QLabel("Kualitas Air",self)
-        self.label_quality.setGeometry(835, 685, 280, 35)
+        self.label_quality.setGeometry(835, 165, 280, 35)
         self.label_quality.setFont(QFont("Arial", 22, QFont.Bold))
         self.label_quality.setAlignment(Qt.AlignCenter)
         self.label_quality.setStyleSheet("background-color: white")
         #tombol kualitas air
         self.kualitas_air_button = QPushButton("Cek Kualitas Air",self)
-        self.kualitas_air_button.setGeometry(835, 880, 280, 40)
+        self.kualitas_air_button.setGeometry(835, 360, 280, 40)
         self.kualitas_air_button.setFont(QFont("Arial", 20, QFont.Bold))
         self.kualitas_air_button.setStyleSheet("background-color: skyblue")
 
         # Gambar untuk Turbidity
         self.turbidity = QPushButton(self)
-        self.turbidity.setGeometry(958, 720, 170, 120)
+        self.turbidity.setGeometry(958, 200, 170, 120)
         self.turbidity.setStyleSheet("QPushButton { border-image: url(turbidity.png) 0 0 0 0 stretch stretch; }")
         # nilai turbidity
         self.nilai_turbidity = QLabel(self)
-        self.nilai_turbidity.setGeometry(983, 840, 120, 30)
+        self.nilai_turbidity.setGeometry(983, 320, 120, 30)
         self.nilai_turbidity.setFont(QFont("Arial", 18))
         self.nilai_turbidity.setAlignment(Qt.AlignCenter)
         self.nilai_turbidity.setStyleSheet("background-color: white")
         self.nilai_turbidity.setText(f"{globals.TURBIDITY}")
         # label turbidity
         self.label_turbidity = QLabel("TDS",self)
-        self.label_turbidity.setGeometry(985, 740, 120, 30)
+        self.label_turbidity.setGeometry(985, 220, 120, 30)
         self.label_turbidity.setFont(QFont("Arial", 18, QFont.Bold))
         self.label_turbidity.setAlignment(Qt.AlignCenter)
         
         # pilih pengisian air
         self.info_transaksi = QLabel("Pilih Pengisian Air", self)
-        self.info_transaksi.setGeometry(665, 545, 620, 40)
+        self.info_transaksi.setGeometry(665, 445, 620, 40)
         self.info_transaksi.setFont(QFont("Arial", 26, QFont.Bold))
         self.info_transaksi.setAlignment(Qt.AlignCenter)
         self.info_transaksi.setStyleSheet("background-color: white")
@@ -194,15 +198,12 @@ class MainWindow(QWidget):
         self.report.setStyleSheet("QPushButton { border-image: url(report.png) 0 0 0 0 stretch stretch; }")
             
         # when click button
-        #self.galon_button.clicked.connect(self.showGalonPopup)
-        self.galon_button.clicked.connect(self.checkPasswordMenuGalon)
-        #self.tumbler_button.clicked.connect(self.showTumblerPopup)
-        self.tumbler_button.clicked.connect(self.checkPasswordTmblerGalon)
+        self.tumbler1_button.clicked.connect(self.checkPasswordTumbler1)
+        self.tumbler2_button.clicked.connect(self.checkPasswordTumbler2)
+        self.tumbler3_button.clicked.connect(self.checkPasswordTumbler3)
         self.report.clicked.connect(self.showReport)
         self.settings.clicked.connect(self.showPasswordSettings)
-        self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(volume="", run="3"))
-        self.bilas_galon_button.clicked.connect(lambda: self.send_instruction_to_controller(volume="1", run="1"))
-        # self.bilas_tumbler_button.clicked.connect(lambda: self.send_instruction_to_controller(run="5"))
+        self.kualitas_air_button.clicked.connect(lambda: self.send_instruction_to_controller(volume="", run="4"))
 
         self.label_serial = QLabel("Panjang Data",self)
         self.label_serial.setGeometry(860, 990, 200, 100)
@@ -245,11 +246,12 @@ class MainWindow(QWidget):
         #self.label_ph.setText(f"{globals.DATA_PH}")
         #self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
         self.label_machine.setText(f"Machine : {globals.STATUS}")
-        self.label_galon_status.setText(f"Galon : {globals.GALON}")
-        self.label_tumbler_status.setText(f"Tumbler : {globals.TUMBLER}")
+        self.label_tumbler1_status.setText(f"Tumbler 1 : {globals.TUMBLER1}")
+        self.label_tumbler2_status.setText(f"Tumbler 2 : {globals.TUMBLER2}")
+        self.label_tumbler3_status.setText(f"Tumbler 2 : {globals.TUMBLER3}")
 
     def refresh_ph_turbidity(self):
-        if globals.STATUS == "ready" and globals.GALON == "ready" and globals.TUMBLER == "ready":
+        if globals.STATUS == "ready" and globals.TUMBLER1 == "ready" and globals.TUMBLER2 == "ready" and globals.TUMBLER3 == "ready":
             self.label_ph.setText(f"{globals.DATA_PH}")
             self.nilai_turbidity.setText(f"{globals.DATA_TURBIDITY}")
 
@@ -257,15 +259,7 @@ class MainWindow(QWidget):
         current_datetime = QDateTime.currentDateTime()
         current_time = current_datetime.toString("hh:mm:ss")
         self.label_datetime.setText(current_time)
-        """
-        try:
-            client = ntplib.NTPClient()
-            response = client.request('pool.ntp.org')
-            current_time = QDateTime.fromMSecsSinceEpoch(response.tx_time * 1000).toString("hh:mm:ss")
-            self.label_datetime.setText(current_time)
-        except Exception as e:
-            print("Error updating datetime:", str(e))
-        """
+
     def request_data_sensor(self):
         print("kirim request sensor ph dan turbidity")
 
@@ -292,8 +286,9 @@ class MainWindow(QWidget):
                     globals.ID = json_data['id']
                     globals.PH = data['data0']
                     globals.TURBIDITY = data['data1']
-                    globals.GALON = mode['galon'] #if mode['galon'] != "" else None
-                    globals.TUMBLER = mode['tumbler'] #if mode['tumbler'] != "" else None
+                    globals.TUMBLER1 = mode['tumbler1']
+                    globals.TUMBLER2 = mode['tumbler2'] 
+                    globals.TUMBLER3 = mode['tumbler3'] 
                     globals.STATUS = mode['status']
                     #sprint("galon: ", mode['galon'], " | ", "tumbler: ", mode['tumbler'])
 
@@ -312,63 +307,72 @@ class MainWindow(QWidget):
                 globals.PH = "-"
                 globals.TURBIDITY= "-"
 
-    def checkPasswordMenuGalon(self):
+    def checkPasswordTumbler1(self):
         if self.player.state() == QMediaPlayer.PlayingState:
             self.player.stop()
-        dialog = PasswordGalonMenu()
+        dialog = PasswordTumblerMenu1()
         dialog.exec_()
         dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
         dialog.exec_()
         
-    def showGalonPopup(self):
-        """
-        if self.player.state() == QMediaPlayer.PlayingState:
-            self.player.stop()
-        dialog = GalonPopup(parent=self)
-        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
-        dialog.exec_()
-        """
-        if globals.GALON == "ready":
+    def showTumblerPopup1(self):
+        if globals.TUMBLER1 == "ready":
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            dialog = GalonPopup(parent=self)
+            dialog = TumblerPopup1(parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         else :
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
             info = "Air Galon Belum Siap"
-            dialog = FailedTransactionPopup(info, parent=self)
+            dialog = FailedTransactionPopup1(info, parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
     
-    def checkPasswordTmblerGalon(self):
+    def checkPasswordTumbler2(self):
         if self.player.state() == QMediaPlayer.PlayingState:
             self.player.stop()
-        dialog = PasswordTumblerMenu()
+        dialog = PasswordTumblerMenu2()
+        dialog.exec_()
+        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+        dialog.exec_()
+        
+    def showTumblerPopup2(self):
+        if globals.TUMBLER2 == "ready":
+            if self.player.state() == QMediaPlayer.PlayingState:
+                self.player.stop()
+            dialog = TumblerPopup2(parent=self)
+            dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+            dialog.exec_()
+        else :
+            if self.player.state() == QMediaPlayer.PlayingState:
+                self.player.stop()
+            info = "Air Galon Belum Siap"
+            dialog = FailedTransactionPopup2(info, parent=self)
+            dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
+            dialog.exec_()
+
+    def checkPasswordTumbler3(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        dialog = PasswordTumblerMenu3()
         dialog.exec_()
         dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
         dialog.exec_()
 
-    def showTumblerPopup(self): 
-        """
-        if self.player.state() == QMediaPlayer.PlayingState:
-            self.player.stop()
-        dialog = TumblerPopup(parent=self)
-        dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
-        dialog.exec_()
-        """ 
-        if globals.TUMBLER == "ready":
+    def showTumblerPopup3(self): 
+        if globals.TUMBLER3 == "ready":
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
-            dialog = TumblerPopup(parent=self)
+            dialog = TumblerPopup3(parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         else:
             if self.player.state() == QMediaPlayer.PlayingState:
                 self.player.stop()
             info = "Air Tumbler Belum Siap"
-            dialog = FailedTransactionPopup(info, parent=self)
+            dialog = FailedTransactionPopup3(info, parent=self)
             dialog.finished.connect(self.toggleAudioPlayback)  # Mengaktifkan kembali audio setelah popup ditutup
             dialog.exec_()
         

@@ -19,10 +19,10 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from lib import globals
 from lib.volume_calculation import volume_calculation
 
-class TumblerPopup(QDialog):
+class TumblerPopup3(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Proses Pengisian Air Tumbler")
+        self.setWindowTitle("Proses Pengisian Air Tumbler 3")
         self.setFixedSize(290, 260)
         self.initUI()
         self.serial = None  # Objek serial untuk komunikasi dengan Arduino
@@ -41,7 +41,7 @@ class TumblerPopup(QDialog):
         self.setPalette(palette)
 
         vbox = QVBoxLayout()
-        self.label_input = QLabel("Pilih Pengisian Air")
+        self.label_input = QLabel("Pilih Pengisian Air 3")
         self.label_input.setAlignment(Qt.AlignCenter)
         self.label_input.setFont(QFont("Arial", 16, QFont.Bold))
         vbox.addWidget(self.label_input)
@@ -123,7 +123,7 @@ class StstusPengisianTumbler(QDialog):
 
         self.setLayout(vbox)
 
-class FailedTransactionPopup(QDialog):
+class FailedTransactionPopup3(QDialog):
     def __init__(self, info_machine, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Info Status")
@@ -163,7 +163,7 @@ class FailedTransactionPopup(QDialog):
 class JenisAirPopup(QDialog):
     def __init__(self, volume, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Proses Pengisian Air Tumbler")
+        self.setWindowTitle("Proses Pengisian Air Tumbler 3")
         self.setFixedSize(290, 260)
         self.initUI(volume)
         self.serial = None  # Objek serial untuk komunikasi dengan Arduino
@@ -232,7 +232,7 @@ class JenisAirPopup(QDialog):
         fix_volume = float(volume) / 1000
         data_baru = ['Tumbler', status , round(fix_volume, 2), current_time]
         
-        if globals.TUMBLER == "ready":
+        if globals.TUMBLER3 == "ready":
             ## komunikasi serial
             ser = serial.Serial('/dev/ttyUSB0', 9600, timeout =1)  # Ganti dengan port serial yang sesuai
             data = {
@@ -249,7 +249,7 @@ class JenisAirPopup(QDialog):
                     "tumbler": "",
                     "status": str(status)
                 },
-                "run": "2"
+                "run": "3"
             }
 
             # # calculate volume 
@@ -276,8 +276,8 @@ class JenisAirPopup(QDialog):
             self.showStatusTumblerPopup
             time.sleep(1)
         else :
-            info = "Air Tumbler Belum Siap"
-            dialog = FailedTransactionPopup(info)
+            info = "Air Tumbler 3 Belum Siap"
+            dialog = FailedTransactionPopup3(info)
             dialog.exec_()
          
     def showStatusTumblerPopup(self):
@@ -296,7 +296,7 @@ class JenisAirPopup(QDialog):
             writer.writerow(data_baru)
 
 # password menu settings
-class PasswordTumblerMenu(QDialog):
+class PasswordTumblerMenu3(QDialog):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.setWindowTitle("Masukan Password")
@@ -386,7 +386,7 @@ class PasswordTumblerMenu(QDialog):
         if data == "2339":
             self.digits = ""
             self.line_edit.setText(self.digits)
-            dialog = TumblerPopup()
+            dialog = TumblerPopup3()
             dialog.exec_()
         else:
             dialog = incorrectPassword()
