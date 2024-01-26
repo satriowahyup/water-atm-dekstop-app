@@ -411,9 +411,10 @@ class MainWindow(QWidget):
                 "data2": "volume"
             },
             "mode": {
-                "galon": "",
+                "tumbler1": "",
                 "volume": str(volume),
-                "tumbler": "",
+                "tumbler2": "",
+                "tumbler3": "",
                 "status": ""
             },
             "run": str(run)

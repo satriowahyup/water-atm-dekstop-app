@@ -244,9 +244,10 @@ class JenisAirPopup(QDialog):
                     "data2": "volume"
                 },
                 "mode": {
-                    "galon": "",
+                    "tumbler1": "",
                     "volume": str(volume),
-                    "tumbler": "",
+                    "tumbler2": "",
+                    "tumbler3": "",
                     "status": str(status)
                 },
                 "run": "1"
