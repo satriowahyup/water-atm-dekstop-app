@@ -197,10 +197,10 @@ class JenisAirPopup(QDialog):
         self.button_dingin.setFixedHeight(50)
         self.button_dingin.setFont(QFont("Arial", 14, QFont.Bold))
 
-        self.button_panas = QPushButton("Panas", self)
-        self.button_panas.setFixedWidth(180)
-        self.button_panas.setFixedHeight(50)
-        self.button_panas.setFont(QFont("Arial", 14, QFont.Bold))
+        # self.button_panas = QPushButton("Panas", self)
+        # self.button_panas.setFixedWidth(180)
+        # self.button_panas.setFixedHeight(50)
+        # self.button_panas.setFont(QFont("Arial", 14, QFont.Bold))
 
         self.button_normal.clicked.connect(lambda: self.send_data_to_arduino(volume, status="normal"))
         self.button_normal.clicked.connect(self.close)
@@ -208,12 +208,12 @@ class JenisAirPopup(QDialog):
         self.button_dingin.clicked.connect(lambda: self.send_data_to_arduino(volume, status="dingin"))
         self.button_dingin.clicked.connect(self.close)
 
-        self.button_panas.clicked.connect(lambda:self.send_data_to_arduino(volume, status="panas"))
-        self.button_panas.clicked.connect(self.close)
+        # self.button_panas.clicked.connect(lambda:self.send_data_to_arduino(volume, status="panas"))
+        # self.button_panas.clicked.connect(self.close)
 
         #vbox.addWidget(self.button_enter)
-        vbox.addSpacing(10)
-        vbox.addWidget(self.button_panas, alignment=Qt.AlignHCenter)
+        # vbox.addSpacing(10)
+        # vbox.addWidget(self.button_panas, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
         vbox.addWidget(self.button_dingin, alignment=Qt.AlignHCenter)
         vbox.addSpacing(10)
